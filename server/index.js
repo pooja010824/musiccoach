@@ -1,5 +1,6 @@
 const express = require("express");
 const cors = require("cors");
+const path = require("path");
 
 const app = express();
 
@@ -14,7 +15,6 @@ const lessonRoutes = require("./routes/lessonRoutes");
 const progressRoutes = require("./routes/progressRoutes");
 const paymentRoutes = require("./routes/paymentRoutes");
 const reviewRoutes = require("./routes/reviewRoutes");
-
 
 app.use("/api/instruments", instrumentRoutes);
 app.use("/api/coaches", coachRoutes);
@@ -32,8 +32,23 @@ app.get("/api/health", (req, res) => {
   });
 });
 
-const PORT = 5000;
+// Serve React production build
+const distPath = path.join(__dirname, "../dist");
+
+app.use(express.static(distPath));
+
+// React SPA fallback
+app.use((req, res, next) => {
+  if (req.method === "GET" && !req.path.startsWith("/api/")) {
+    res.sendFile(path.join(distPath, "index.html"));
+    return;
+  }
+
+  next();
+});
+
+const PORT = process.env.PORT || 5000;
 
 app.listen(PORT, () => {
-  console.log(`Server running on http://localhost:${PORT}`);
+  console.log(`Server running on port ${PORT}`);
 });

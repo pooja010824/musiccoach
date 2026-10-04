@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 
-const API = "http://localhost:5000/api";
+const API = import.meta.env.VITE_API_URL || "/api";
 const STUDENT_ID = "cmutjdrzy0001pgf6h68o09v5";
 
 const instruments = [
