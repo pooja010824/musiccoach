@@ -1,179 +1,159 @@
 const prisma = require("../server/prisma");
 
-async function main() {
-  // -----------------------------
-  // Instruments
-  // -----------------------------
-  const piano = await prisma.instrument.upsert({
-    where: { name: "Piano" },
+async function seedCoach({
+  name,
+  email,
+  phone,
+  instrument,
+  bio,
+  experienceYears,
+  hourlyRate,
+  availability,
+  studentName,
+  studentEmail,
+  studentPhone,
+  age,
+  skillLevel,
+  learningGoal,
+  bookingDate,
+  dayOfWeek,
+  startTime,
+  amount,
+  transactionId,
+  lessonNotes,
+  lessonHomework,
+  progressSummary,
+  strengths,
+  improvements,
+  reviewComment,
+}) {
+  // Instrument
+  const instrumentRecord = await prisma.instrument.upsert({
+    where: { name: instrument },
     update: {},
-    create: { name: "Piano" },
+    create: { name: instrument },
   });
 
-  const violin = await prisma.instrument.upsert({
-    where: { name: "Violin" },
-    update: {},
-    create: { name: "Violin" },
-  });
-
-  const vocal = await prisma.instrument.upsert({
-    where: { name: "Vocal" },
-    update: {},
-    create: { name: "Vocal" },
-  });
-
-  console.log("Instruments seeded successfully 🎵");
-
-  // -----------------------------
-  // Coach User
-  // -----------------------------
+  // Coach user
   const coachUser = await prisma.user.upsert({
-    where: { email: "rahul.coach@example.com" },
+    where: { email },
     update: {
-      name: "Rahul Sharma",
-      phone: "9876543210",
+      name,
+      phone,
       role: "COACH",
     },
     create: {
-      name: "Rahul Sharma",
-      email: "rahul.coach@example.com",
-      phone: "9876543210",
+      name,
+      email,
+      phone,
       role: "COACH",
     },
   });
 
-  // -----------------------------
-  // Coach Profile
-  // -----------------------------
+  // Coach profile
   const coach = await prisma.coachProfile.upsert({
     where: { userId: coachUser.id },
     update: {
-      bio: "Experienced piano coach for beginners and intermediate students.",
-      experienceYears: 5,
-      hourlyRate: 500,
+      bio,
+      experienceYears,
+      hourlyRate,
       isVerified: true,
       backgroundCheck: true,
     },
     create: {
       userId: coachUser.id,
-      bio: "Experienced piano coach for beginners and intermediate students.",
-      experienceYears: 5,
-      hourlyRate: 500,
+      bio,
+      experienceYears,
+      hourlyRate,
       isVerified: true,
       backgroundCheck: true,
     },
   });
 
-  // -----------------------------
-  // Coach Instrument
-  // -----------------------------
+  // Coach instrument
   await prisma.coachInstrument.upsert({
     where: {
       coachId_instrumentId: {
         coachId: coach.id,
-        instrumentId: piano.id,
+        instrumentId: instrumentRecord.id,
       },
     },
     update: {},
     create: {
       coachId: coach.id,
-      instrumentId: piano.id,
+      instrumentId: instrumentRecord.id,
     },
   });
 
-  // -----------------------------
   // Availability
-  // -----------------------------
   await prisma.availability.deleteMany({
     where: { coachId: coach.id },
   });
 
   await prisma.availability.createMany({
-    data: [
-      {
-        coachId: coach.id,
-        dayOfWeek: 1,
-        startTime: "17:00",
-        endTime: "19:00",
-      },
-      {
-        coachId: coach.id,
-        dayOfWeek: 3,
-        startTime: "17:00",
-        endTime: "19:00",
-      },
-      {
-        coachId: coach.id,
-        dayOfWeek: 6,
-        startTime: "10:00",
-        endTime: "13:00",
-      },
-    ],
+    data: availability.map((slot) => ({
+      coachId: coach.id,
+      dayOfWeek: slot.dayOfWeek,
+      startTime: slot.startTime,
+      endTime: slot.endTime,
+    })),
   });
 
-  console.log("Coach seeded successfully 👨‍🏫");
-
-  // -----------------------------
-  // Student User
-  // -----------------------------
+  // Student
   const studentUser = await prisma.user.upsert({
-    where: { email: "student@example.com" },
+    where: { email: studentEmail },
     update: {
-      name: "Aarav Kumar",
-      phone: "9876543211",
+      name: studentName,
+      phone: studentPhone,
       role: "STUDENT",
     },
     create: {
-      name: "Aarav Kumar",
-      email: "student@example.com",
-      phone: "9876543211",
+      name: studentName,
+      email: studentEmail,
+      phone: studentPhone,
       role: "STUDENT",
     },
   });
 
-  // -----------------------------
-  // Student Profile
-  // -----------------------------
   const student = await prisma.studentProfile.upsert({
     where: { userId: studentUser.id },
     update: {
-      age: 14,
-      skillLevel: "Beginner",
-      learningGoal: "Learn piano from basics",
+      age,
+      skillLevel,
+      learningGoal,
     },
     create: {
       userId: studentUser.id,
-      age: 14,
-      skillLevel: "Beginner",
-      learningGoal: "Learn piano from basics",
+      age,
+      skillLevel,
+      learningGoal,
     },
   });
 
-  console.log("Student seeded successfully 🎓");
-
-  // -----------------------------
   // Booking
-  // -----------------------------
   let booking = await prisma.booking.findFirst({
     where: {
       studentId: student.id,
       coachId: coach.id,
-      instrumentId: piano.id,
+      instrumentId: instrumentRecord.id,
     },
   });
+
+  const startDate = new Date(bookingDate);
+  const endDate = new Date(startDate.getTime() + 60 * 60 * 1000);
 
   if (!booking) {
     booking = await prisma.booking.create({
       data: {
         studentId: student.id,
         coachId: coach.id,
-        instrumentId: piano.id,
+        instrumentId: instrumentRecord.id,
         status: "COMPLETED",
-        dayOfWeek: 1,
-        startTime: "17:00",
+        dayOfWeek,
+        startTime,
         durationMins: 60,
-        startDate: new Date("2026-10-05T11:30:00.000Z"),
-        endDate: new Date("2026-10-05T12:30:00.000Z"),
+        startDate,
+        endDate,
       },
     });
   } else {
@@ -181,126 +161,103 @@ async function main() {
       where: { id: booking.id },
       data: {
         status: "COMPLETED",
-        dayOfWeek: 1,
-        startTime: "17:00",
+        dayOfWeek,
+        startTime,
         durationMins: 60,
-        startDate: new Date("2026-10-05T11:30:00.000Z"),
-        endDate: new Date("2026-10-05T12:30:00.000Z"),
+        startDate,
+        endDate,
       },
     });
   }
 
-  console.log("Booking seeded successfully 📅");
-
-  // -----------------------------
   // Lesson
-  // -----------------------------
   let lesson = await prisma.lesson.findFirst({
-    where: {
-      bookingId: booking.id,
-    },
+    where: { bookingId: booking.id },
   });
 
   if (!lesson) {
     lesson = await prisma.lesson.create({
       data: {
         bookingId: booking.id,
-        date: new Date("2026-10-05T11:30:00.000Z"),
+        date: startDate,
         status: "COMPLETED",
-        notes: "First trial piano lesson",
-        homework: "Practice C major scale for 10 minutes",
+        notes: lessonNotes,
+        homework: lessonHomework,
       },
     });
   } else {
     lesson = await prisma.lesson.update({
       where: { id: lesson.id },
       data: {
-        date: new Date("2026-10-05T11:30:00.000Z"),
+        date: startDate,
         status: "COMPLETED",
-        notes: "First trial piano lesson",
-        homework: "Practice C major scale for 10 minutes",
+        notes: lessonNotes,
+        homework: lessonHomework,
       },
     });
   }
 
-  console.log("Lesson seeded successfully 🎹");
-
-  // -----------------------------
-  // Progress Note
-  // -----------------------------
+  // Progress note
   const existingProgress = await prisma.progressNote.findFirst({
     where: { lessonId: lesson.id },
   });
+
+  const progressData = {
+    summary: progressSummary,
+    strengths,
+    improvements,
+    homework: lessonHomework,
+  };
 
   if (!existingProgress) {
     await prisma.progressNote.create({
       data: {
         lessonId: lesson.id,
-        summary:
-          "Student learned basic piano posture and C major scale.",
-        strengths:
-          "Good rhythm and quick understanding of notes.",
-        improvements:
-          "Needs more practice with finger positioning.",
-        homework:
-          "Practice C major scale for 10 minutes daily.",
+        ...progressData,
       },
     });
   } else {
     await prisma.progressNote.update({
       where: { id: existingProgress.id },
-      data: {
-        summary:
-          "Student learned basic piano posture and C major scale.",
-        strengths:
-          "Good rhythm and quick understanding of notes.",
-        improvements:
-          "Needs more practice with finger positioning.",
-        homework:
-          "Practice C major scale for 10 minutes daily.",
-      },
+      data: progressData,
     });
   }
 
-  console.log("Progress note seeded successfully 📈");
-
-  // -----------------------------
   // Payment
-  // -----------------------------
   const existingPayment = await prisma.payment.findFirst({
     where: { bookingId: booking.id },
   });
+
+  const paymentData = {
+    amount,
+    status: "PAID",
+    paymentDate: new Date(),
+    transactionId,
+  };
 
   if (!existingPayment) {
     await prisma.payment.create({
       data: {
         bookingId: booking.id,
-        amount: 500,
-        status: "PAID",
-        paymentDate: new Date("2026-10-04T09:52:30.413Z"),
-        transactionId: "TXN-DEMO-001",
+        ...paymentData,
       },
     });
   } else {
     await prisma.payment.update({
       where: { id: existingPayment.id },
-      data: {
-        amount: 500,
-        status: "PAID",
-        paymentDate: new Date("2026-10-04T09:52:30.413Z"),
-        transactionId: "TXN-DEMO-001",
-      },
+      data: paymentData,
     });
   }
 
-  console.log("Payment seeded successfully 💳");
-
-  // -----------------------------
   // Review
-  // -----------------------------
   const existingReview = await prisma.review.findFirst({
     where: { bookingId: booking.id },
   });
+
+  const reviewData = {
+    rating: 5,
+    comment: reviewComment,
+  };
 
   if (!existingReview) {
     await prisma.review.create({
@@ -308,29 +265,183 @@ async function main() {
         bookingId: booking.id,
         studentId: student.id,
         coachId: coach.id,
-        rating: 5,
-        comment:
-          "Rahul is a great piano coach. Clear explanations and very patient.",
+        ...reviewData,
       },
     });
   } else {
     await prisma.review.update({
       where: { id: existingReview.id },
-      data: {
-        rating: 5,
-        comment:
-          "Rahul is a great piano coach. Clear explanations and very patient.",
-      },
+      data: reviewData,
     });
   }
 
-  console.log("Review seeded successfully ⭐");
-  console.log("🎉 Complete demo data seeded successfully!");
+  console.log(`${instrument} demo data seeded successfully 🎵`);
+}
+
+async function main() {
+  // Instruments
+  await prisma.instrument.upsert({
+    where: { name: "Piano" },
+    update: {},
+    create: { name: "Piano" },
+  });
+
+  await prisma.instrument.upsert({
+    where: { name: "Violin" },
+    update: {},
+    create: { name: "Violin" },
+  });
+
+  await prisma.instrument.upsert({
+    where: { name: "Vocal" },
+    update: {},
+    create: { name: "Vocal" },
+  });
+
+  // --------------------------------------------------
+  // RAHUL - PIANO
+  // --------------------------------------------------
+  await seedCoach({
+    name: "Rahul Sharma",
+    email: "rahul.coach@example.com",
+    phone: "9876543210",
+    instrument: "Piano",
+    bio: "Experienced piano coach for beginners and intermediate students.",
+    experienceYears: 5,
+    hourlyRate: 500,
+
+    availability: [
+      { dayOfWeek: 1, startTime: "17:00", endTime: "19:00" },
+      { dayOfWeek: 3, startTime: "17:00", endTime: "19:00" },
+      { dayOfWeek: 6, startTime: "10:00", endTime: "13:00" },
+    ],
+
+    studentName: "Aarav Kumar",
+    studentEmail: "student@example.com",
+    studentPhone: "9876543211",
+    age: 14,
+    skillLevel: "Beginner",
+    learningGoal: "Learn piano from basics",
+
+    bookingDate: "2026-10-05T11:30:00.000Z",
+    dayOfWeek: 1,
+    startTime: "17:00",
+    amount: 500,
+    transactionId: "TXN-DEMO-001",
+
+    lessonNotes: "First trial piano lesson",
+    lessonHomework: "Practice C major scale for 10 minutes",
+
+    progressSummary:
+      "Student learned basic piano posture and C major scale.",
+    strengths:
+      "Good rhythm and quick understanding of notes.",
+    improvements:
+      "Needs more practice with finger positioning.",
+
+    reviewComment:
+      "Rahul is a great piano coach. Clear explanations and very patient.",
+  });
+
+  // --------------------------------------------------
+  // PRIYA - VIOLIN
+  // --------------------------------------------------
+  await seedCoach({
+    name: "Priya Mehta",
+    email: "priya.violin@example.com",
+    phone: "9876543212",
+    instrument: "Violin",
+    bio: "Classically trained violin coach helping students build strong technique and musical confidence.",
+    experienceYears: 7,
+    hourlyRate: 600,
+
+    availability: [
+      { dayOfWeek: 2, startTime: "18:00", endTime: "20:00" },
+      { dayOfWeek: 4, startTime: "17:00", endTime: "20:00" },
+      { dayOfWeek: 6, startTime: "10:00", endTime: "13:00" },
+    ],
+
+    studentName: "Meera Singh",
+    studentEmail: "meera.student@example.com",
+    studentPhone: "9876543213",
+    age: 16,
+    skillLevel: "Beginner",
+    learningGoal: "Learn violin technique and improve confidence",
+
+    bookingDate: "2026-10-02T12:30:00.000Z",
+    dayOfWeek: 5,
+    startTime: "18:00",
+    amount: 600,
+    transactionId: "TXN-DEMO-002",
+
+    lessonNotes: "Introduction to violin posture, bow grip and open strings.",
+    lessonHomework: "Practice bowing open strings for 10 minutes daily.",
+
+    progressSummary:
+      "Student learned correct violin posture and basic bow control.",
+    strengths:
+      "Good listening skills and strong interest in learning.",
+    improvements:
+      "Needs more consistency with bow direction and finger placement.",
+
+    reviewComment:
+      "Priya explains violin techniques very clearly and makes learning enjoyable.",
+  });
+
+  // --------------------------------------------------
+  // ANANYA - VOCAL
+  // --------------------------------------------------
+  await seedCoach({
+    name: "Ananya Verma",
+    email: "ananya.vocal@example.com",
+    phone: "9876543214",
+    instrument: "Vocal",
+    bio: "Professional vocal coach focused on voice technique, confidence, breathing and performance skills.",
+    experienceYears: 6,
+    hourlyRate: 550,
+
+    availability: [
+      { dayOfWeek: 3, startTime: "17:00", endTime: "20:00" },
+      { dayOfWeek: 5, startTime: "17:00", endTime: "20:00" },
+      { dayOfWeek: 0, startTime: "10:00", endTime: "13:00" },
+    ],
+
+    studentName: "Riya Sharma",
+    studentEmail: "riya.student@example.com",
+    studentPhone: "9876543215",
+    age: 15,
+    skillLevel: "Beginner",
+    learningGoal: "Improve singing technique and stage confidence",
+
+    bookingDate: "2026-10-03T11:30:00.000Z",
+    dayOfWeek: 6,
+    startTime: "17:00",
+    amount: 550,
+    transactionId: "TXN-DEMO-003",
+
+    lessonNotes:
+      "Introduction to breathing technique, warm-ups and basic vocal exercises.",
+    lessonHomework:
+      "Practice breathing exercises and vocal warm-ups for 10 minutes daily.",
+
+    progressSummary:
+      "Student learned basic breathing technique and vocal warm-up exercises.",
+    strengths:
+      "Good pitch awareness and enthusiastic participation.",
+    improvements:
+      "Needs more control over breathing and sustained notes.",
+
+    reviewComment:
+      "Ananya is patient and explains vocal exercises in a very simple way.",
+  });
+
+  console.log("🎉 Complete demo data for Piano, Violin and Vocal seeded successfully!");
 }
 
 main()
   .catch((error) => {
-    console.error("Seed failed:", error);
+    console.error("❌ Seed failed:");
+    console.error(error);
     process.exit(1);
   })
   .finally(async () => {
