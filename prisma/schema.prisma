@@ -1,0 +1,187 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+enum UserRole {
+  STUDENT
+  PARENT
+  COACH
+  ADMIN
+}
+
+model User {
+  id        String   @id @default(cuid())
+  name      String
+  email     String   @unique
+  phone     String?
+  role      UserRole @default(STUDENT)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  coachProfile CoachProfile?
+  studentProfile StudentProfile?
+}
+model CoachProfile {
+  id              String   @id @default(cuid())
+  userId          String   @unique
+  bio             String?
+  experienceYears Int?
+  hourlyRate      Float?
+  isVerified      Boolean  @default(false)
+  backgroundCheck Boolean  @default(false)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  user            User     @relation(fields: [userId], references: [id])
+  instruments CoachInstrument[]
+  availabilities Availability[]
+  bookings Booking[]
+  reviews  Review[]
+}
+model Instrument {
+  id        String            @id @default(cuid())
+  name      String            @unique
+  createdAt DateTime          @default(now())
+  coaches   CoachInstrument[]
+  bookings Booking[]
+}
+
+model CoachInstrument {
+  id           String       @id @default(cuid())
+  coachId      String
+  instrumentId String
+
+  coach        CoachProfile @relation(fields: [coachId], references: [id])
+  instrument   Instrument   @relation(fields: [instrumentId], references: [id])
+
+  @@unique([coachId, instrumentId])
+}
+model Availability {
+  id        String   @id @default(cuid())
+  coachId   String
+  dayOfWeek Int
+  startTime String
+  endTime   String
+  createdAt DateTime @default(now())
+
+  coach CoachProfile @relation(fields: [coachId], references: [id])
+}
+model StudentProfile {
+  id           String   @id @default(cuid())
+  userId       String   @unique
+  age          Int?
+  skillLevel   String?
+  learningGoal String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id])
+  bookings Booking[]
+  reviews Review[]
+}
+enum BookingStatus {
+  TRIAL
+  ACTIVE
+  PAUSED
+  CANCELLED
+  COMPLETED
+}
+enum PaymentStatus {
+  PENDING
+  PAID
+  FAILED
+  REFUNDED
+}
+
+model Payment {
+  id            String        @id @default(cuid())
+  bookingId     String
+  amount        Float
+  status        PaymentStatus @default(PENDING)
+  paymentDate   DateTime?
+  transactionId String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  booking Booking @relation(fields: [bookingId], references: [id])
+}
+
+model Booking {
+  id           String        @id @default(cuid())
+  studentId    String
+  coachId      String
+  instrumentId String
+  status       BookingStatus @default(TRIAL)
+
+  dayOfWeek    Int
+  startTime    String
+  durationMins Int            @default(60)
+
+  startDate    DateTime
+  endDate      DateTime?
+
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  student      StudentProfile @relation(fields: [studentId], references: [id])
+  coach        CoachProfile   @relation(fields: [coachId], references: [id])
+  instrument   Instrument     @relation(fields: [instrumentId], references: [id])
+  lessons      Lesson[]
+  payments     Payment[]
+  reviews      Review[]
+}
+enum LessonStatus {
+  SCHEDULED
+  COMPLETED
+  CANCELLED
+  MISSED
+}
+
+model Lesson {
+  id        String       @id @default(cuid())
+  bookingId String
+  date      DateTime
+  status    LessonStatus @default(SCHEDULED)
+  notes     String?
+  homework  String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  booking Booking @relation(fields: [bookingId], references: [id])
+    progressNotes ProgressNote[]
+}
+model ProgressNote {
+  id       String @id @default(cuid())
+  lessonId String
+
+  summary      String?
+  strengths    String?
+  improvements String?
+  homework     String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  lesson Lesson @relation(fields: [lessonId], references: [id])
+}
+model Review {
+  id        String   @id @default(cuid())
+  bookingId String
+  studentId String
+  coachId   String
+  rating    Int
+  comment   String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  booking Booking       @relation(fields: [bookingId], references: [id])
+  student StudentProfile @relation(fields: [studentId], references: [id])
+  coach   CoachProfile   @relation(fields: [coachId], references: [id])
+}

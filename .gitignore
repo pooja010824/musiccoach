@@ -1,0 +1,11 @@
+﻿node_modules/
+dist/
+.env
+*.db
+.DS_Store
+
+.agents/
+.claude/
+.cursor/
+.devin/
+.windsurf/
