@@ -1,4 +1,4 @@
-const express = require("express");
+﻿const express = require("express");
 const cors = require("cors");
 const path = require("path");
 
@@ -15,6 +15,7 @@ const lessonRoutes = require("./routes/lessonRoutes");
 const progressRoutes = require("./routes/progressRoutes");
 const paymentRoutes = require("./routes/paymentRoutes");
 const reviewRoutes = require("./routes/reviewRoutes");
+const authRoutes = require("./routes/authRoutes");
 
 app.use("/api/instruments", instrumentRoutes);
 app.use("/api/coaches", coachRoutes);
@@ -24,6 +25,7 @@ app.use("/api/lessons", lessonRoutes);
 app.use("/api/progress", progressRoutes);
 app.use("/api/payments", paymentRoutes);
 app.use("/api/reviews", reviewRoutes);
+app.use("/api/auth", authRoutes);
 
 app.get("/api/health", (req, res) => {
   res.json({
@@ -32,12 +34,10 @@ app.get("/api/health", (req, res) => {
   });
 });
 
-// Serve React production build
 const distPath = path.join(__dirname, "../dist");
 
 app.use(express.static(distPath));
 
-// React SPA fallback
 app.use((req, res, next) => {
   if (req.method === "GET" && !req.path.startsWith("/api/")) {
     res.sendFile(path.join(distPath, "index.html"));

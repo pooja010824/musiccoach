@@ -58,6 +58,17 @@ function App() {
   const [loading, setLoading] = useState(true);
   const [notice, setNotice] = useState("");
   const [authOpen, setAuthOpen] = useState(false);
+  const [authMode, setAuthMode] = useState("login");
+  const [authLoading, setAuthLoading] = useState(false);
+  const [authError, setAuthError] = useState("");
+  const [authUser, setAuthUser] = useState(null);
+
+  const [authForm, setAuthForm] = useState({
+    name: "",
+    email: "",
+    password: "",
+    role: "STUDENT",
+  });
 
   const [bookingForm, setBookingForm] = useState({
     instrumentId: "",
@@ -66,6 +77,130 @@ function App() {
     startDate: "",
     durationMins: "60",
   });
+
+  const token =
+    typeof window !== "undefined"
+      ? window.localStorage.getItem("musiccoach_token")
+      : null;
+
+  const currentStudentId =
+    authUser?.studentProfileId || STUDENT_ID;
+
+  const openAuth = (mode) => {
+    setAuthMode(mode);
+    setAuthError("");
+    setAuthOpen(true);
+  };
+
+  const handleAuthSubmit = async (event) => {
+    event.preventDefault();
+
+    setAuthLoading(true);
+    setAuthError("");
+
+    try {
+      const endpoint =
+        authMode === "signup" ? "signup" : "login";
+
+      const payload =
+        authMode === "signup"
+          ? authForm
+          : {
+              email: authForm.email,
+              password: authForm.password,
+            };
+
+      const response = await fetch(
+        `${API}/auth/${endpoint}`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(payload),
+        }
+      );
+
+      const result = await response.json();
+
+      if (!response.ok || !result.success) {
+        throw new Error(
+          result.message || "Authentication failed."
+        );
+      }
+
+      window.localStorage.setItem(
+        "musiccoach_token",
+        result.token
+      );
+
+      setAuthUser(result.data);
+      setAuthOpen(false);
+      setAuthError("");
+
+      setAuthForm({
+        name: "",
+        email: "",
+        password: "",
+        role: "STUDENT",
+      });
+
+      setNotice(
+        authMode === "signup"
+          ? "Account created successfully!"
+          : "Welcome back!"
+      );
+    } catch (error) {
+      console.error(error);
+
+      setAuthError(
+        error.message ||
+          "Unable to authenticate."
+      );
+    } finally {
+      setAuthLoading(false);
+    }
+  };
+
+  const handleLogout = () => {
+    window.localStorage.removeItem(
+      "musiccoach_token"
+    );
+
+    setAuthUser(null);
+    setNotice("You have been logged out.");
+  };
+
+  useEffect(() => {
+    const savedToken =
+      window.localStorage.getItem(
+        "musiccoach_token"
+      );
+
+    if (!savedToken) return;
+
+    fetch(`${API}/auth/me`, {
+      headers: {
+        Authorization: `Bearer ${savedToken}`,
+      },
+    })
+      .then(async (response) => {
+        const result = await response.json();
+
+        if (!response.ok || !result.success) {
+          throw new Error("Session expired.");
+        }
+
+        setAuthUser(result.data);
+      })
+      .catch(() => {
+        window.localStorage.removeItem(
+          "musiccoach_token"
+        );
+
+        setAuthUser(null);
+      });
+  }, []);
 
   const [reviewForm, setReviewForm] = useState({
     bookingId: "",
@@ -318,7 +453,7 @@ function App() {
               "application/json",
           },
           body: JSON.stringify({
-            studentId: STUDENT_ID,
+            studentId: currentStudentId,
             coachId: selectedCoach.id,
             instrumentId:
               bookingForm.instrumentId,
@@ -727,23 +862,36 @@ function App() {
 
         <div className="nav-actions">
 
-          <button
-            className="ghost-button"
-            onClick={() =>
-              setAuthOpen(true)
-            }
-          >
-            Login
-          </button>
+          {authUser ? (
+            <>
+              <span className="nav-user">
+                Hi, {authUser.name}
+              </span>
 
-          <button
-            className="dark-button small"
-            onClick={() =>
-              setAuthOpen(true)
-            }
-          >
-            Sign Up
-          </button>
+              <button
+                className="ghost-button"
+                onClick={handleLogout}
+              >
+                Logout
+              </button>
+            </>
+          ) : (
+            <>
+              <button
+                className="ghost-button"
+                onClick={() => openAuth("login")}
+              >
+                Login
+              </button>
+
+              <button
+                className="dark-button small"
+                onClick={() => openAuth("signup")}
+              >
+                Sign Up
+              </button>
+            </>
+          )}
 
         </div>
 
@@ -2250,47 +2398,133 @@ function App() {
             </button>
 
             <div className="auth-icon">
-              🎵
+              ??
             </div>
 
             <h2>
-              Welcome to MusicCoach
+              {authMode === "signup"
+                ? "Create your MusicCoach account"
+                : "Welcome back"}
             </h2>
 
             <p>
-              This internship project currently
-              uses a demo student account.
+              {authMode === "signup"
+                ? "Start learning with a trusted music coach."
+                : "Login to manage your lessons and progress."}
             </p>
 
-            <div className="demo-account">
+            {authError && (
+              <div
+                className="demo-note"
+                style={{
+                  color: "#b91c1c",
+                  marginBottom: "14px",
+                }}
+              >
+                {authError}
+              </div>
+            )}
 
-              <span>
-                Demo Student
-              </span>
+            <form onSubmit={handleAuthSubmit}>
+              {authMode === "signup" && (
+                <input
+                  type="text"
+                  placeholder="Full name"
+                  value={authForm.name}
+                  onChange={(event) =>
+                    setAuthForm({
+                      ...authForm,
+                      name: event.target.value,
+                    })
+                  }
+                  required
+                />
+              )}
 
-              <strong>
-                Aarav Kumar
-              </strong>
+              <input
+                type="email"
+                placeholder="Email address"
+                value={authForm.email}
+                onChange={(event) =>
+                  setAuthForm({
+                    ...authForm,
+                    email: event.target.value,
+                  })
+                }
+                required
+              />
 
-              <small>
-                student@example.com
-              </small>
+              <input
+                type="password"
+                placeholder="Password"
+                minLength={6}
+                value={authForm.password}
+                onChange={(event) =>
+                  setAuthForm({
+                    ...authForm,
+                    password: event.target.value,
+                  })
+                }
+                required
+              />
 
-            </div>
+              {authMode === "signup" && (
+                <select
+                  value={authForm.role}
+                  onChange={(event) =>
+                    setAuthForm({
+                      ...authForm,
+                      role: event.target.value,
+                    })
+                  }
+                >
+                  <option value="STUDENT">
+                    Student
+                  </option>
+
+                  <option value="PARENT">
+                    Parent
+                  </option>
+                </select>
+              )}
+
+              <button
+                type="submit"
+                className="dark-button full"
+                disabled={authLoading}
+              >
+                {authLoading
+                  ? "Please wait..."
+                  : authMode === "signup"
+                    ? "Create Account"
+                    : "Login"}
+              </button>
+            </form>
 
             <button
-              className="dark-button full"
-              onClick={() =>
-                setAuthOpen(false)
-              }
+              type="button"
+              className="ghost-button"
+              style={{
+                width: "100%",
+                marginTop: "12px",
+              }}
+              onClick={() => {
+                setAuthMode(
+                  authMode === "signup"
+                    ? "login"
+                    : "signup"
+                );
+
+                setAuthError("");
+              }}
             >
-              Continue as Demo Student
+              {authMode === "signup"
+                ? "Already have an account? Login"
+                : "New to MusicCoach? Sign Up"}
             </button>
 
             <small className="demo-note">
-              Authentication UI is currently in
-              demo mode. Real authentication can be
-              connected later.
+              Your account session is saved in this browser.
             </small>
 
           </div>
