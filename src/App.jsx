@@ -4,12 +4,25 @@ const API = import.meta.env.VITE_API_URL || "/api";
 const STUDENT_ID = "cmutjdrzy0001pgf6h68o09v5";
 
 const instruments = [
-  { name: "Piano", icon: "🎹", text: "Beginner to advanced" },
-  { name: "Violin", icon: "🎻", text: "Classical & modern" },
-  { name: "Vocal", icon: "🎤", text: "Voice & performance" },
+  {
+    name: "Piano",
+    icon: "🎹",
+    text: "Beginner to advanced",
+  },
+  {
+    name: "Violin",
+    icon: "🎻",
+    text: "Classical & modern",
+  },
+  {
+    name: "Vocal",
+    icon: "🎤",
+    text: "Voice & performance",
+  },
 ];
 
-const safeArray = (value) => (Array.isArray(value) ? value : []);
+const safeArray = (value) =>
+  Array.isArray(value) ? value : [];
 
 const formatDate = (value) => {
   if (!value) return "—";
@@ -36,7 +49,9 @@ function App() {
   const [reviews, setReviews] = useState([]);
   const [payments, setPayments] = useState([]);
 
-  const [selectedInstrument, setSelectedInstrument] = useState("All");
+  const [selectedInstrument, setSelectedInstrument] =
+    useState("All");
+
   const [search, setSearch] = useState("");
   const [selectedCoach, setSelectedCoach] = useState(null);
 
@@ -58,6 +73,9 @@ function App() {
     comment: "",
   });
 
+  /*
+   * LOAD ALL DATA
+   */
   const loadData = async () => {
     try {
       setLoading(true);
@@ -78,16 +96,92 @@ function App() {
         progressJson,
         reviewsJson,
         paymentsJson,
-      ] = await Promise.all(responses.map((response) => response.json()));
+      ] = await Promise.all(
+        responses.map((response) => response.json())
+      );
 
-      setCoaches(safeArray(coachesJson.data));
-      setBookings(safeArray(bookingsJson.data));
-      setLessons(safeArray(lessonsJson.data));
-      setProgress(safeArray(progressJson.data));
-      setReviews(safeArray(reviewsJson.data));
-      setPayments(safeArray(paymentsJson.data));
+      const apiCoaches = safeArray(coachesJson.data);
+      const apiBookings = safeArray(bookingsJson.data);
+
+      /*
+       * COACH FALLBACK
+       *
+       * If /api/coaches does not return a coach but that coach
+       * exists inside a booking, recover that coach here.
+       *
+       * This makes Find a Coach more reliable in production.
+       */
+      const coachMap = new Map();
+
+      apiCoaches.forEach((coach) => {
+        if (coach?.id) {
+          coachMap.set(coach.id, coach);
+        }
+      });
+
+      apiBookings.forEach((booking) => {
+        const bookingCoach = booking?.coach;
+
+        if (!bookingCoach?.id) return;
+
+        if (!coachMap.has(bookingCoach.id)) {
+          coachMap.set(bookingCoach.id, {
+            ...bookingCoach,
+
+            instruments:
+              bookingCoach.instruments?.length
+                ? bookingCoach.instruments
+                : booking.instrument
+                  ? [
+                      {
+                        instrument: booking.instrument,
+                      },
+                    ]
+                  : [],
+          });
+        } else {
+          const existingCoach =
+            coachMap.get(bookingCoach.id);
+
+          if (
+            (!existingCoach.instruments ||
+              existingCoach.instruments.length === 0) &&
+            booking.instrument
+          ) {
+            existingCoach.instruments = [
+              {
+                instrument: booking.instrument,
+              },
+            ];
+          }
+        }
+      });
+
+      const finalCoaches = Array.from(
+        coachMap.values()
+      );
+
+      setCoaches(finalCoaches);
+      setBookings(apiBookings);
+
+      setLessons(
+        safeArray(lessonsJson.data)
+      );
+
+      setProgress(
+        safeArray(progressJson.data)
+      );
+
+      setReviews(
+        safeArray(reviewsJson.data)
+      );
+
+      setPayments(
+        safeArray(paymentsJson.data)
+      );
     } catch (error) {
       console.error(error);
+
       setNotice(
         "Unable to load data. Please make sure the backend is running."
       );
@@ -100,17 +194,25 @@ function App() {
     loadData();
   }, []);
 
+  /*
+   * FILTER COACHES
+   */
   const filteredCoaches = useMemo(() => {
     const query = search.trim().toLowerCase();
 
     return coaches.filter((coach) => {
-      const name = coach.user?.name?.toLowerCase() || "";
-      const bio = coach.bio?.toLowerCase() || "";
+      const name =
+        coach.user?.name?.toLowerCase() || "";
+
+      const bio =
+        coach.bio?.toLowerCase() || "";
 
       const instrumentMatch =
         selectedInstrument === "All" ||
         coach.instruments?.some(
-          (item) => item.instrument?.name === selectedInstrument
+          (item) =>
+            item.instrument?.name ===
+            selectedInstrument
         );
 
       const searchMatch =
@@ -118,101 +220,164 @@ function App() {
         name.includes(query) ||
         bio.includes(query) ||
         coach.instruments?.some((item) =>
-          item.instrument?.name?.toLowerCase().includes(query)
+          item.instrument?.name
+            ?.toLowerCase()
+            .includes(query)
         );
 
-      return instrumentMatch && searchMatch;
+      return (
+        instrumentMatch &&
+        searchMatch
+      );
     });
-  }, [coaches, selectedInstrument, search]);
+  }, [
+    coaches,
+    selectedInstrument,
+    search,
+  ]);
 
+  /*
+   * COACH RATING
+   */
   const getCoachRating = (coachId) => {
     const coachReviews = reviews.filter(
-      (review) => review.coachId === coachId
+      (review) =>
+        review.coachId === coachId
     );
 
-    if (!coachReviews.length) return "5.0";
+    if (!coachReviews.length) {
+      return "5.0";
+    }
 
     const total = coachReviews.reduce(
-      (sum, review) => sum + Number(review.rating || 0),
+      (sum, review) =>
+        sum + Number(review.rating || 0),
       0
     );
 
-    return (total / coachReviews.length).toFixed(1);
+    return (
+      total / coachReviews.length
+    ).toFixed(1);
   };
 
+  /*
+   * OPEN COACH
+   */
   const openCoach = (coach) => {
     setSelectedCoach(coach);
 
-    const firstInstrument = coach.instruments?.[0]?.instrument;
+    const firstInstrument =
+      coach.instruments?.[0]?.instrument;
 
     setBookingForm((current) => ({
       ...current,
-      instrumentId: firstInstrument?.id || "",
+      instrumentId:
+        firstInstrument?.id || "",
     }));
 
     setTimeout(() => {
-      document.getElementById("booking")?.scrollIntoView({
-        behavior: "smooth",
-        block: "start",
-      });
+      document
+        .getElementById("booking")
+        ?.scrollIntoView({
+          behavior: "smooth",
+          block: "start",
+        });
     }, 50);
   };
 
+  /*
+   * BOOKING
+   */
   const handleBooking = async (event) => {
     event.preventDefault();
 
     if (!selectedCoach) {
-      setNotice("Please select a coach first.");
+      setNotice(
+        "Please select a coach first."
+      );
       return;
     }
 
-    if (!bookingForm.instrumentId || !bookingForm.startDate) {
-      setNotice("Please select an instrument and start date.");
+    if (
+      !bookingForm.instrumentId ||
+      !bookingForm.startDate
+    ) {
+      setNotice(
+        "Please select an instrument and start date."
+      );
       return;
     }
 
     try {
-      const response = await fetch(`${API}/bookings`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          studentId: STUDENT_ID,
-          coachId: selectedCoach.id,
-          instrumentId: bookingForm.instrumentId,
-          dayOfWeek: Number(bookingForm.dayOfWeek),
-          startTime: bookingForm.startTime,
-          durationMins: Number(bookingForm.durationMins),
-          startDate: new Date(
-            `${bookingForm.startDate}T${bookingForm.startTime}:00`
-          ).toISOString(),
-        }),
-      });
+      const response = await fetch(
+        `${API}/bookings`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type":
+              "application/json",
+          },
+          body: JSON.stringify({
+            studentId: STUDENT_ID,
+            coachId: selectedCoach.id,
+            instrumentId:
+              bookingForm.instrumentId,
+            dayOfWeek: Number(
+              bookingForm.dayOfWeek
+            ),
+            startTime:
+              bookingForm.startTime,
+            durationMins: Number(
+              bookingForm.durationMins
+            ),
+            startDate: new Date(
+              `${bookingForm.startDate}T${bookingForm.startTime}:00`
+            ).toISOString(),
+          }),
+        }
+      );
 
-      const result = await response.json();
+      const result =
+        await response.json();
 
       if (!response.ok) {
-        throw new Error(result.message || "Booking failed");
+        throw new Error(
+          result.message ||
+            "Booking failed"
+        );
       }
 
-      setNotice("🎉 Trial lesson booked successfully!");
+      setNotice(
+        "🎉 Trial lesson booked successfully!"
+      );
 
       await loadData();
 
-      document.getElementById("bookings")?.scrollIntoView({
-        behavior: "smooth",
-      });
+      document
+        .getElementById("bookings")
+        ?.scrollIntoView({
+          behavior: "smooth",
+        });
     } catch (error) {
       console.error(error);
-      setNotice(error.message || "Unable to create booking.");
+
+      setNotice(
+        error.message ||
+          "Unable to create booking."
+      );
     }
   };
 
-  const cancelBooking = async (bookingId) => {
-    const confirmed = window.confirm(
-      "Are you sure you want to cancel this booking?"
-    );
+  /*
+   * CANCEL BOOKING
+   */
+  const cancelBooking = async (
+    bookingId
+  ) => {
+    const confirmed =
+      window.confirm(
+        "Are you sure you want to cancel this booking?"
+      );
 
     if (!confirmed) return;
 
@@ -222,97 +387,145 @@ function App() {
         {
           method: "PATCH",
           headers: {
-            "Content-Type": "application/json",
+            "Content-Type":
+              "application/json",
           },
         }
       );
 
-      const result = await response.json();
+      const result =
+        await response.json();
 
       if (!response.ok) {
-        throw new Error(result.message || "Cancellation failed");
+        throw new Error(
+          result.message ||
+            "Cancellation failed"
+        );
       }
 
-      setNotice("Booking cancelled successfully.");
+      setNotice(
+        "Booking cancelled successfully."
+      );
 
       await loadData();
     } catch (error) {
       console.error(error);
-      setNotice(error.message || "Unable to cancel booking.");
+
+      setNotice(
+        error.message ||
+          "Unable to cancel booking."
+      );
     }
   };
 
-  const getPaymentForBooking = (bookingId) => {
+  /*
+   * PAYMENT
+   */
+  const getPaymentForBooking = (
+    bookingId
+  ) => {
     return payments.find(
-      (payment) => payment.bookingId === bookingId
+      (payment) =>
+        payment.bookingId ===
+        bookingId
     );
   };
 
-  const payForBooking = async (booking) => {
-    if (booking.status === "CANCELLED") {
-      setNotice("Cancelled bookings cannot be paid.");
+  const payForBooking = async (
+    booking
+  ) => {
+    if (
+      booking.status ===
+      "CANCELLED"
+    ) {
+      setNotice(
+        "Cancelled bookings cannot be paid."
+      );
       return;
     }
 
-    const existingPayment = getPaymentForBooking(booking.id);
+    const existingPayment =
+      getPaymentForBooking(
+        booking.id
+      );
 
     try {
-      let paymentId = existingPayment?.id;
+      let paymentId =
+        existingPayment?.id;
 
       if (!paymentId) {
         const hourlyRate = Number(
-          booking.coach?.hourlyRate || 500
+          booking.coach?.hourlyRate ||
+            500
         );
 
         const amount =
           hourlyRate *
-          (Number(booking.durationMins || 60) / 60);
+          (Number(
+            booking.durationMins || 60
+          ) /
+            60);
 
-        const createResponse = await fetch(`${API}/payments`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            bookingId: booking.id,
-            amount,
-            transactionId: `MC-DEMO-${Date.now()}`,
-          }),
-        });
+        const createResponse =
+          await fetch(
+            `${API}/payments`,
+            {
+              method: "POST",
+              headers: {
+                "Content-Type":
+                  "application/json",
+              },
+              body: JSON.stringify({
+                bookingId:
+                  booking.id,
+                amount,
+                transactionId: `MC-DEMO-${Date.now()}`,
+              }),
+            }
+          );
 
-        const createResult = await createResponse.json();
+        const createResult =
+          await createResponse.json();
 
         if (!createResponse.ok) {
           throw new Error(
-            createResult.message || "Payment creation failed"
+            createResult.message ||
+              "Payment creation failed"
           );
         }
 
-        paymentId = createResult.data?.id;
+        paymentId =
+          createResult.data?.id;
       }
 
       if (!paymentId) {
-        throw new Error("Payment record was not created.");
+        throw new Error(
+          "Payment record was not created."
+        );
       }
 
-      const statusResponse = await fetch(
-        `${API}/payments/${paymentId}/status`,
-        {
-          method: "PATCH",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            status: "PAID",
-          }),
-        }
-      );
+      const statusResponse =
+        await fetch(
+          `${API}/payments/${paymentId}/status`,
+          {
+            method: "PATCH",
+            headers: {
+              "Content-Type":
+                "application/json",
+            },
+            body: JSON.stringify({
+              status: "PAID",
+            }),
+          }
+        );
 
-      const statusResult = await statusResponse.json();
+      const statusResult =
+        await statusResponse.json();
 
       if (!statusResponse.ok) {
         throw new Error(
-          statusResult.message || "Payment failed"
+          statusResult.message ||
+            "Payment failed"
         );
       }
 
@@ -323,46 +536,79 @@ function App() {
       await loadData();
     } catch (error) {
       console.error(error);
-      setNotice(error.message || "Unable to process payment.");
+
+      setNotice(
+        error.message ||
+          "Unable to process payment."
+      );
     }
   };
 
-  const submitReview = async (event) => {
+  /*
+   * REVIEW
+   */
+  const submitReview = async (
+    event
+  ) => {
     event.preventDefault();
 
-    const selectedLesson = lessons.find(
-      (lesson) => lesson.bookingId === reviewForm.bookingId
-    );
+    const selectedLesson =
+      lessons.find(
+        (lesson) =>
+          lesson.bookingId ===
+          reviewForm.bookingId
+      );
 
-    const booking = bookings.find(
-      (item) => item.id === reviewForm.bookingId
-    );
+    const booking =
+      bookings.find(
+        (item) =>
+          item.id ===
+          reviewForm.bookingId
+      );
 
-    if (!booking || !selectedLesson) {
-      setNotice("Please select a completed lesson.");
+    if (
+      !booking ||
+      !selectedLesson
+    ) {
+      setNotice(
+        "Please select a completed lesson."
+      );
       return;
     }
 
     try {
-      const response = await fetch(`${API}/reviews`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          bookingId: booking.id,
-          studentId: booking.studentId,
-          coachId: booking.coachId,
-          rating: Number(reviewForm.rating),
-          comment: reviewForm.comment,
-        }),
-      });
+      const response =
+        await fetch(
+          `${API}/reviews`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type":
+                "application/json",
+            },
+            body: JSON.stringify({
+              bookingId:
+                booking.id,
+              studentId:
+                booking.studentId,
+              coachId:
+                booking.coachId,
+              rating: Number(
+                reviewForm.rating
+              ),
+              comment:
+                reviewForm.comment,
+            }),
+          }
+        );
 
-      const result = await response.json();
+      const result =
+        await response.json();
 
       if (!response.ok) {
         throw new Error(
-          result.message || "Review submission failed"
+          result.message ||
+            "Review submission failed"
         );
       }
 
@@ -372,34 +618,60 @@ function App() {
         comment: "",
       });
 
-      setNotice("⭐ Thank you! Your review was submitted.");
+      setNotice(
+        "⭐ Thank you! Your review was submitted."
+      );
 
       await loadData();
     } catch (error) {
       console.error(error);
-      setNotice(error.message || "Unable to submit review.");
+
+      setNotice(
+        error.message ||
+          "Unable to submit review."
+      );
     }
   };
 
-  const completedLessons = lessons.filter(
-    (lesson) => lesson.status === "COMPLETED"
-  );
-
-  const paidAmount = payments
-    .filter((payment) => payment.status === "PAID")
-    .reduce(
-      (sum, payment) => sum + Number(payment.amount || 0),
-      0
+  /*
+   * DASHBOARD CALCULATIONS
+   */
+  const completedLessons =
+    lessons.filter(
+      (lesson) =>
+        lesson.status ===
+        "COMPLETED"
     );
 
-  const averageRating = reviews.length
-    ? (
-        reviews.reduce(
-          (sum, review) => sum + Number(review.rating || 0),
-          0
-        ) / reviews.length
-      ).toFixed(1)
-    : "5.0";
+  const paidAmount =
+    payments
+      .filter(
+        (payment) =>
+          payment.status === "PAID"
+      )
+      .reduce(
+        (sum, payment) =>
+          sum +
+          Number(
+            payment.amount || 0
+          ),
+        0
+      );
+
+  const averageRating =
+    reviews.length
+      ? (
+          reviews.reduce(
+            (sum, review) =>
+              sum +
+              Number(
+                review.rating || 0
+              ),
+            0
+          ) /
+          reviews.length
+        ).toFixed(1)
+      : "5.0";
 
   return (
     <div className="app">
@@ -408,7 +680,11 @@ function App() {
         <div className="notice">
           <span>{notice}</span>
 
-          <button onClick={() => setNotice("")}>
+          <button
+            onClick={() =>
+              setNotice("")
+            }
+          >
             ×
           </button>
         </div>
@@ -418,8 +694,13 @@ function App() {
 
       <header className="navbar">
 
-        <a href="#home" className="brand">
-          <span className="brand-icon">🎵</span>
+        <a
+          href="#home"
+          className="brand"
+        >
+          <span className="brand-icon">
+            🎵
+          </span>
 
           <span>
             Music<span>Coach</span>
@@ -427,24 +708,39 @@ function App() {
         </a>
 
         <nav className="nav-links">
-          <a href="#home">Home</a>
-          <a href="#coaches">Find a Coach</a>
-          <a href="#how-it-works">How It Works</a>
-          <a href="#dashboard">Dashboard</a>
+          <a href="#home">
+            Home
+          </a>
+
+          <a href="#coaches">
+            Find a Coach
+          </a>
+
+          <a href="#how-it-works">
+            How It Works
+          </a>
+
+          <a href="#dashboard">
+            Dashboard
+          </a>
         </nav>
 
         <div className="nav-actions">
 
           <button
             className="ghost-button"
-            onClick={() => setAuthOpen(true)}
+            onClick={() =>
+              setAuthOpen(true)
+            }
           >
             Login
           </button>
 
           <button
             className="dark-button small"
-            onClick={() => setAuthOpen(true)}
+            onClick={() =>
+              setAuthOpen(true)
+            }
           >
             Sign Up
           </button>
@@ -457,7 +753,10 @@ function App() {
 
         {/* HERO */}
 
-        <section className="hero" id="home">
+        <section
+          className="hero"
+          id="home"
+        >
 
           <div className="hero-content">
 
@@ -468,13 +767,16 @@ function App() {
             <h1>
               Learn Music.
               <br />
-              <span>Grow Your Talent.</span>
+              <span>
+                Grow Your Talent.
+              </span>
             </h1>
 
             <p>
-              Connect with trusted piano, violin and vocal coaches
-              for structured, personalized music lessons from the
-              comfort of home.
+              Connect with trusted piano,
+              violin and vocal coaches for
+              structured, personalized music
+              lessons from the comfort of home.
             </p>
 
             <div className="hero-actions">
@@ -496,9 +798,17 @@ function App() {
             </div>
 
             <div className="trust-row">
-              <span>✓ Verified Coaches</span>
-              <span>✓ Flexible Scheduling</span>
-              <span>✓ Progress Tracking</span>
+              <span>
+                ✓ Verified Coaches
+              </span>
+
+              <span>
+                ✓ Flexible Scheduling
+              </span>
+
+              <span>
+                ✓ Progress Tracking
+              </span>
             </div>
 
           </div>
@@ -512,13 +822,23 @@ function App() {
             </div>
 
             <div className="floating-card rating-card">
-              <strong>⭐ 5.0</strong>
-              <span>Rated Coaches</span>
+              <strong>
+                ⭐ 5.0
+              </strong>
+
+              <span>
+                Rated Coaches
+              </span>
             </div>
 
             <div className="floating-card lesson-card">
-              <strong>🎵 Weekly</strong>
-              <span>Personal Lessons</span>
+              <strong>
+                🎵 Weekly
+              </strong>
+
+              <span>
+                Personal Lessons
+              </span>
             </div>
 
           </div>
@@ -530,23 +850,43 @@ function App() {
         <section className="stats-strip">
 
           <div>
-            <strong>500+</strong>
-            <span>Music Coaches</span>
+            <strong>
+              500+
+            </strong>
+
+            <span>
+              Music Coaches
+            </span>
           </div>
 
           <div>
-            <strong>3</strong>
-            <span>Instruments</span>
+            <strong>
+              3
+            </strong>
+
+            <span>
+              Instruments
+            </span>
           </div>
 
           <div>
-            <strong>1:1</strong>
-            <span>Personal Learning</span>
+            <strong>
+              1:1
+            </strong>
+
+            <span>
+              Personal Learning
+            </span>
           </div>
 
           <div>
-            <strong>100%</strong>
-            <span>Progress Focused</span>
+            <strong>
+              100%
+            </strong>
+
+            <span>
+              Progress Focused
+            </span>
           </div>
 
         </section>
@@ -566,45 +906,54 @@ function App() {
             </h2>
 
             <p>
-              Find the right teacher and start learning
-              from the comfort of home.
+              Find the right teacher and start
+              learning from the comfort of home.
             </p>
 
           </div>
 
           <div className="instrument-grid">
 
-            {instruments.map((instrument) => (
+            {instruments.map(
+              (instrument) => (
+                <button
+                  className="instrument-card"
+                  key={instrument.name}
+                  onClick={() => {
+                    setSelectedInstrument(
+                      instrument.name
+                    );
 
-              <button
-                className="instrument-card"
-                key={instrument.name}
-                onClick={() => {
-                  setSelectedInstrument(instrument.name);
+                    document
+                      .getElementById(
+                        "coaches"
+                      )
+                      ?.scrollIntoView({
+                        behavior:
+                          "smooth",
+                      });
+                  }}
+                >
 
-                  document
-                    .getElementById("coaches")
-                    ?.scrollIntoView({
-                      behavior: "smooth",
-                    });
-                }}
-              >
+                  <span className="instrument-icon">
+                    {instrument.icon}
+                  </span>
 
-                <span className="instrument-icon">
-                  {instrument.icon}
-                </span>
+                  <strong>
+                    {instrument.name}
+                  </strong>
 
-                <strong>{instrument.name}</strong>
+                  <span>
+                    {instrument.text}
+                  </span>
 
-                <span>{instrument.text}</span>
+                  <small>
+                    Explore coaches →
+                  </small>
 
-                <small>
-                  Explore coaches →
-                </small>
-
-              </button>
-
-            ))}
+                </button>
+              )
+            )}
 
           </div>
 
@@ -635,28 +984,32 @@ function App() {
               icon="🛡️"
               title="Trusted Coaches"
             >
-              Discover experienced and verified music coaches.
+              Discover experienced and verified
+              music coaches.
             </Feature>
 
             <Feature
               icon="📅"
               title="Flexible Lessons"
             >
-              Choose lesson times that work with your schedule.
+              Choose lesson times that work
+              with your schedule.
             </Feature>
 
             <Feature
               icon="📈"
               title="Track Progress"
             >
-              See notes, strengths, improvements and homework.
+              See notes, strengths, improvements
+              and homework.
             </Feature>
 
             <Feature
               icon="⭐"
               title="Real Reviews"
             >
-              Learn from the experiences of other students.
+              Learn from the experiences of
+              other students.
             </Feature>
 
           </div>
@@ -683,14 +1036,17 @@ function App() {
               </h2>
 
               <p>
-                Search trusted coaches by instrument or name.
+                Search trusted coaches by
+                instrument or name.
               </p>
 
             </div>
 
             <div className="coach-count">
               {filteredCoaches.length} coach
-              {filteredCoaches.length !== 1 ? "es" : ""}
+              {filteredCoaches.length !== 1
+                ? "es"
+                : ""}
             </div>
 
           </div>
@@ -702,29 +1058,37 @@ function App() {
               placeholder="🔎 Search coach or instrument..."
               value={search}
               onChange={(event) =>
-                setSearch(event.target.value)
+                setSearch(
+                  event.target.value
+                )
               }
             />
 
             <div className="filter-buttons">
 
-              {["All", "Piano", "Violin", "Vocal"].map(
+              {[
+                "All",
+                "Piano",
+                "Violin",
+                "Vocal",
+              ].map(
                 (instrument) => (
-
                   <button
                     key={instrument}
                     className={
-                      selectedInstrument === instrument
+                      selectedInstrument ===
+                      instrument
                         ? "filter-button active"
                         : "filter-button"
                     }
                     onClick={() =>
-                      setSelectedInstrument(instrument)
+                      setSelectedInstrument(
+                        instrument
+                      )
                     }
                   >
                     {instrument}
                   </button>
-
                 )
               )}
 
@@ -744,7 +1108,8 @@ function App() {
 
             </div>
 
-          ) : filteredCoaches.length === 0 ? (
+          ) : filteredCoaches.length ===
+            0 ? (
 
             <div className="empty-state">
 
@@ -757,7 +1122,8 @@ function App() {
               </h3>
 
               <p>
-                Try another instrument or search term.
+                Try another instrument or
+                search term.
               </p>
 
             </div>
@@ -766,16 +1132,20 @@ function App() {
 
             <div className="coach-grid">
 
-              {filteredCoaches.map((coach) => (
-
-                <CoachCard
-                  key={coach.id}
-                  coach={coach}
-                  rating={getCoachRating(coach.id)}
-                  onSelect={() => openCoach(coach)}
-                />
-
-              ))}
+              {filteredCoaches.map(
+                (coach) => (
+                  <CoachCard
+                    key={coach.id}
+                    coach={coach}
+                    rating={getCoachRating(
+                      coach.id
+                    )}
+                    onSelect={() =>
+                      openCoach(coach)
+                    }
+                  />
+                )
+              )}
 
             </div>
 
@@ -801,22 +1171,29 @@ function App() {
                 </span>
 
                 <div className="profile-avatar large">
-                  {selectedCoach.user?.name?.charAt(0) || "C"}
+                  {selectedCoach.user?.name?.charAt(
+                    0
+                  ) || "C"}
                 </div>
 
                 <h2>
-                  {selectedCoach.user?.name || "Music Coach"}
+                  {selectedCoach.user?.name ||
+                    "Music Coach"}
                 </h2>
 
                 <div className="rating-line">
-                  ⭐ {getCoachRating(selectedCoach.id)}
+                  ⭐{" "}
+                  {getCoachRating(
+                    selectedCoach.id
+                  )}
 
                   <span>
                     (
                     {
                       reviews.filter(
                         (review) =>
-                          review.coachId === selectedCoach.id
+                          review.coachId ===
+                          selectedCoach.id
                       ).length
                     }{" "}
                     reviews)
@@ -831,7 +1208,9 @@ function App() {
                 <div className="profile-pills">
 
                   {selectedCoach.isVerified && (
-                    <span>✓ Verified</span>
+                    <span>
+                      ✓ Verified
+                    </span>
                   )}
 
                   {selectedCoach.backgroundCheck && (
@@ -846,7 +1225,9 @@ function App() {
 
                   <div>
                     <strong>
-                      {selectedCoach.experienceYears || 0}+
+                      {selectedCoach.experienceYears ||
+                        0}
+                      +
                     </strong>
 
                     <span>
@@ -856,7 +1237,10 @@ function App() {
 
                   <div>
                     <strong>
-                      {money(selectedCoach.hourlyRate || 500)}
+                      {money(
+                        selectedCoach.hourlyRate ||
+                          500
+                      )}
                     </strong>
 
                     <span>
@@ -884,7 +1268,8 @@ function App() {
                   </h2>
 
                   <p>
-                    Book a trial lesson with your selected coach.
+                    Book a trial lesson with your
+                    selected coach.
                   </p>
 
                 </div>
@@ -893,11 +1278,14 @@ function App() {
                   Instrument
 
                   <select
-                    value={bookingForm.instrumentId}
+                    value={
+                      bookingForm.instrumentId
+                    }
                     onChange={(event) =>
                       setBookingForm({
                         ...bookingForm,
-                        instrumentId: event.target.value,
+                        instrumentId:
+                          event.target.value,
                       })
                     }
                   >
@@ -908,14 +1296,19 @@ function App() {
 
                     {selectedCoach.instruments?.map(
                       (item) => (
-
                         <option
-                          value={item.instrument?.id}
-                          key={item.instrument?.id}
+                          value={
+                            item.instrument?.id
+                          }
+                          key={
+                            item.instrument?.id
+                          }
                         >
-                          {item.instrument?.name}
+                          {
+                            item.instrument
+                              ?.name
+                          }
                         </option>
-
                       )
                     )}
 
@@ -929,23 +1322,47 @@ function App() {
                     Day
 
                     <select
-                      value={bookingForm.dayOfWeek}
+                      value={
+                        bookingForm.dayOfWeek
+                      }
                       onChange={(event) =>
                         setBookingForm({
                           ...bookingForm,
-                          dayOfWeek: event.target.value,
+                          dayOfWeek:
+                            event.target.value,
                         })
                       }
                     >
-                      <option value="1">Monday</option>
-                      <option value="2">Tuesday</option>
-                      <option value="3">Wednesday</option>
-                      <option value="4">Thursday</option>
-                      <option value="5">Friday</option>
-                      <option value="6">Saturday</option>
-                      <option value="0">Sunday</option>
-                    </select>
 
+                      <option value="1">
+                        Monday
+                      </option>
+
+                      <option value="2">
+                        Tuesday
+                      </option>
+
+                      <option value="3">
+                        Wednesday
+                      </option>
+
+                      <option value="4">
+                        Thursday
+                      </option>
+
+                      <option value="5">
+                        Friday
+                      </option>
+
+                      <option value="6">
+                        Saturday
+                      </option>
+
+                      <option value="0">
+                        Sunday
+                      </option>
+
+                    </select>
                   </label>
 
                   <label>
@@ -953,15 +1370,17 @@ function App() {
 
                     <input
                       type="time"
-                      value={bookingForm.startTime}
+                      value={
+                        bookingForm.startTime
+                      }
                       onChange={(event) =>
                         setBookingForm({
                           ...bookingForm,
-                          startTime: event.target.value,
+                          startTime:
+                            event.target.value,
                         })
                       }
                     />
-
                   </label>
 
                 </div>
@@ -973,29 +1392,35 @@ function App() {
 
                     <input
                       type="date"
-                      value={bookingForm.startDate}
+                      value={
+                        bookingForm.startDate
+                      }
                       onChange={(event) =>
                         setBookingForm({
                           ...bookingForm,
-                          startDate: event.target.value,
+                          startDate:
+                            event.target.value,
                         })
                       }
                     />
-
                   </label>
 
                   <label>
                     Duration
 
                     <select
-                      value={bookingForm.durationMins}
+                      value={
+                        bookingForm.durationMins
+                      }
                       onChange={(event) =>
                         setBookingForm({
                           ...bookingForm,
-                          durationMins: event.target.value,
+                          durationMins:
+                            event.target.value,
                         })
                       }
                     >
+
                       <option value="30">
                         30 minutes
                       </option>
@@ -1011,8 +1436,8 @@ function App() {
                       <option value="90">
                         90 minutes
                       </option>
-                    </select>
 
+                    </select>
                   </label>
 
                 </div>
@@ -1025,8 +1450,12 @@ function App() {
 
                   <strong>
                     {money(
-                      (selectedCoach.hourlyRate || 500) *
-                        (Number(bookingForm.durationMins) / 60)
+                      (selectedCoach.hourlyRate ||
+                        500) *
+                        (Number(
+                          bookingForm.durationMins
+                        ) /
+                          60)
                     )}
                   </strong>
 
@@ -1067,7 +1496,8 @@ function App() {
               </h2>
 
               <p>
-                Everything you need to stay on track.
+                Everything you need to stay
+                on track.
               </p>
 
             </div>
@@ -1084,7 +1514,9 @@ function App() {
 
             <StatCard
               icon="🎓"
-              value={completedLessons.length}
+              value={
+                completedLessons.length
+              }
               label="Completed Lessons"
             />
 
@@ -1119,126 +1551,160 @@ function App() {
 
           {bookings.length === 0 ? (
 
-            <Empty text="No bookings yet. Find a coach and book your first lesson." />
+            <Empty
+              text="No bookings yet. Find a coach and book your first lesson."
+            />
 
           ) : (
 
             <div className="data-grid">
 
-              {bookings.map((booking) => {
+              {bookings.map(
+                (booking) => {
+                  const payment =
+                    getPaymentForBooking(
+                      booking.id
+                    );
 
-                const payment =
-                  getPaymentForBooking(booking.id);
+                  const coach =
+                    booking.coach;
 
-                const coach = booking.coach;
-                const instrument = booking.instrument;
+                  const instrument =
+                    booking.instrument;
 
-                return (
+                  return (
+                    <div
+                      className="data-card"
+                      key={booking.id}
+                    >
 
-                  <div
-                    className="data-card"
-                    key={booking.id}
-                  >
+                      <div className="data-card-top">
 
-                    <div className="data-card-top">
+                        <div className="mini-avatar">
+                          {coach?.user?.name?.charAt(
+                            0
+                          ) || "C"}
+                        </div>
 
-                      <div className="mini-avatar">
-                        {coach?.user?.name?.charAt(0) || "C"}
+                        <div>
+
+                          <h3>
+                            {coach?.user?.name ||
+                              "Coach"}
+                          </h3>
+
+                          <p>
+                            {instrument?.name ||
+                              "Music"}{" "}
+                            Lesson
+                          </p>
+
+                        </div>
+
+                        <StatusBadge
+                          status={
+                            booking.status
+                          }
+                        />
+
                       </div>
 
-                      <div>
+                      <div className="info-list">
 
-                        <h3>
-                          {coach?.user?.name || "Coach"}
-                        </h3>
+                        <div>
+                          <span>
+                            📅 Date
+                          </span>
 
-                        <p>
-                          {instrument?.name || "Music"} Lesson
-                        </p>
+                          <strong>
+                            {formatDate(
+                              booking.startDate
+                            )}
+                          </strong>
+                        </div>
+
+                        <div>
+                          <span>
+                            🕐 Time
+                          </span>
+
+                          <strong>
+                            {
+                              booking.startTime
+                            }
+                          </strong>
+                        </div>
+
+                        <div>
+                          <span>
+                            ⏱ Duration
+                          </span>
+
+                          <strong>
+                            {
+                              booking.durationMins
+                            }{" "}
+                            mins
+                          </strong>
+                        </div>
 
                       </div>
 
-                      <StatusBadge
-                        status={booking.status}
-                      />
+                      <div className="card-actions">
 
-                    </div>
+                        {booking.status !==
+                          "CANCELLED" &&
+                          booking.status !==
+                            "COMPLETED" && (
 
-                    <div className="info-list">
+                            <button
+                              className="danger-button"
+                              onClick={() =>
+                                cancelBooking(
+                                  booking.id
+                                )
+                              }
+                            >
+                              Cancel
+                            </button>
 
-                      <div>
-                        <span>📅 Date</span>
+                          )}
 
-                        <strong>
-                          {formatDate(booking.startDate)}
-                        </strong>
-                      </div>
+                        {booking.status ===
+                        "CANCELLED" ? (
 
-                      <div>
-                        <span>🕐 Time</span>
+                          <span className="cancelled-badge">
+                            Cancelled
+                          </span>
 
-                        <strong>
-                          {booking.startTime}
-                        </strong>
-                      </div>
+                        ) : payment?.status ===
+                          "PAID" ? (
 
-                      <div>
-                        <span>⏱ Duration</span>
+                          <span className="paid-badge">
+                            ✓ Paid
+                          </span>
 
-                        <strong>
-                          {booking.durationMins} mins
-                        </strong>
-                      </div>
-
-                    </div>
-
-                    <div className="card-actions">
-
-                      {booking.status !== "CANCELLED" &&
-                        booking.status !== "COMPLETED" && (
+                        ) : (
 
                           <button
-                            className="danger-button"
+                            className="dark-button"
                             onClick={() =>
-                              cancelBooking(booking.id)
+                              payForBooking(
+                                booking
+                              )
                             }
                           >
-                            Cancel
+                            💳 Pay Now
                           </button>
 
                         )}
 
-                      {booking.status === "CANCELLED" ? (
-
-                        <span className="cancelled-badge">
-                          Cancelled
-                        </span>
-
-                      ) : payment?.status === "PAID" ? (
-
-                        <span className="paid-badge">
-                          ✓ Paid
-                        </span>
-
-                      ) : (
-
-                        <button
-                          className="dark-button"
-                          onClick={() =>
-                            payForBooking(booking)
-                          }
-                        >
-                          💳 Pay Now
-                        </button>
-
-                      )}
+                      </div>
 
                     </div>
-
-                  </div>
-
-                );
-              })}
+                  );
+                }
+              )}
 
             </div>
 
@@ -1261,63 +1727,76 @@ function App() {
 
           {lessons.length === 0 ? (
 
-            <Empty text="Your lessons will appear here after you book a coach." />
+            <Empty
+              text="Your lessons will appear here after you book a coach."
+            />
 
           ) : (
 
             <div className="lesson-list">
 
-              {lessons.map((lesson) => (
+              {lessons.map(
+                (lesson) => (
 
-                <div
-                  className="lesson-row"
-                  key={lesson.id}
-                >
+                  <div
+                    className="lesson-row"
+                    key={lesson.id}
+                  >
 
-                  <div className="lesson-date">
+                    <div className="lesson-date">
 
-                    <strong>
-                      {new Date(lesson.date).getDate()}
-                    </strong>
+                      <strong>
+                        {new Date(
+                          lesson.date
+                        ).getDate()}
+                      </strong>
 
-                    <span>
-                      {new Date(
-                        lesson.date
-                      ).toLocaleDateString("en-IN", {
-                        month: "short",
-                      })}
-                    </span>
+                      <span>
+                        {new Date(
+                          lesson.date
+                        ).toLocaleDateString(
+                          "en-IN",
+                          {
+                            month: "short",
+                          }
+                        )}
+                      </span>
+
+                    </div>
+
+                    <div className="lesson-info">
+
+                      <h3>
+                        {lesson.booking
+                          ?.instrument?.name ||
+                          "Music"}{" "}
+                        Lesson
+                      </h3>
+
+                      <p>
+                        with{" "}
+                        {lesson.booking
+                          ?.coach?.user?.name ||
+                          "your coach"}
+                      </p>
+
+                    </div>
+
+                    <StatusBadge
+                      status={
+                        lesson.status
+                      }
+                    />
+
+                    <div className="lesson-note">
+                      {lesson.notes ||
+                        "No lesson notes added yet."}
+                    </div>
 
                   </div>
 
-                  <div className="lesson-info">
-
-                    <h3>
-                      {lesson.booking?.instrument?.name ||
-                        "Music"}{" "}
-                      Lesson
-                    </h3>
-
-                    <p>
-                      with{" "}
-                      {lesson.booking?.coach?.user?.name ||
-                        "your coach"}
-                    </p>
-
-                  </div>
-
-                  <StatusBadge
-                    status={lesson.status}
-                  />
-
-                  <div className="lesson-note">
-                    {lesson.notes ||
-                      "No lesson notes added yet."}
-                  </div>
-
-                </div>
-
-              ))}
+                )
+              )}
 
             </div>
 
@@ -1340,62 +1819,73 @@ function App() {
 
           {progress.length === 0 ? (
 
-            <Empty text="Progress notes will appear after your coach adds them." />
+            <Empty
+              text="Progress notes will appear after your coach adds them."
+            />
 
           ) : (
 
             <div className="progress-grid">
 
-              {progress.map((item) => (
+              {progress.map(
+                (item) => (
 
-                <div
-                  className="progress-card"
-                  key={item.id}
-                >
+                  <div
+                    className="progress-card"
+                    key={item.id}
+                  >
 
-                  <div className="progress-card-head">
+                    <div className="progress-card-head">
 
-                    <span>
-                      📈 Progress Note
-                    </span>
+                      <span>
+                        📈 Progress Note
+                      </span>
 
-                    <small>
-                      {formatDate(item.createdAt)}
-                    </small>
+                      <small>
+                        {formatDate(
+                          item.createdAt
+                        )}
+                      </small>
+
+                    </div>
+
+                    <h3>
+                      {item.lesson
+                        ?.booking
+                        ?.instrument
+                        ?.name ||
+                        "Music"}{" "}
+                      Lesson
+                    </h3>
+
+                    <ProgressBlock
+                      title="Lesson Summary"
+                      text={item.summary}
+                    />
+
+                    <ProgressBlock
+                      title="Strengths"
+                      text={item.strengths}
+                      positive
+                    />
+
+                    <ProgressBlock
+                      title="Needs Improvement"
+                      text={
+                        item.improvements
+                      }
+                    />
+
+                    <ProgressBlock
+                      title="Homework"
+                      text={item.homework}
+                      homework
+                    />
 
                   </div>
 
-                  <h3>
-                    {item.lesson?.booking?.instrument?.name ||
-                      "Music"}{" "}
-                    Lesson
-                  </h3>
-
-                  <ProgressBlock
-                    title="Lesson Summary"
-                    text={item.summary}
-                  />
-
-                  <ProgressBlock
-                    title="Strengths"
-                    text={item.strengths}
-                    positive
-                  />
-
-                  <ProgressBlock
-                    title="Needs Improvement"
-                    text={item.improvements}
-                  />
-
-                  <ProgressBlock
-                    title="Homework"
-                    text={item.homework}
-                    homework
-                  />
-
-                </div>
-
-              ))}
+                )
+              )}
 
             </div>
 
@@ -1432,11 +1922,14 @@ function App() {
                 Completed lesson
 
                 <select
-                  value={reviewForm.bookingId}
+                  value={
+                    reviewForm.bookingId
+                  }
                   onChange={(event) =>
                     setReviewForm({
                       ...reviewForm,
-                      bookingId: event.target.value,
+                      bookingId:
+                        event.target.value,
                     })
                   }
                 >
@@ -1445,20 +1938,28 @@ function App() {
                     Select a lesson
                   </option>
 
-                  {completedLessons.map((lesson) => (
+                  {completedLessons.map(
+                    (lesson) => (
 
-                    <option
-                      value={lesson.bookingId}
-                      key={lesson.id}
-                    >
-                      {lesson.booking?.coach?.user?.name ||
-                        "Coach"}{" "}
-                      —{" "}
-                      {lesson.booking?.instrument?.name ||
-                        "Music"}
-                    </option>
+                      <option
+                        value={
+                          lesson.bookingId
+                        }
+                        key={lesson.id}
+                      >
+                        {lesson.booking
+                          ?.coach?.user
+                          ?.name ||
+                          "Coach"}{" "}
+                        —{" "}
+                        {lesson.booking
+                          ?.instrument
+                          ?.name ||
+                          "Music"}
+                      </option>
 
-                  ))}
+                    )
+                  )}
 
                 </select>
 
@@ -1469,11 +1970,14 @@ function App() {
                 Rating
 
                 <select
-                  value={reviewForm.rating}
+                  value={
+                    reviewForm.rating
+                  }
                   onChange={(event) =>
                     setReviewForm({
                       ...reviewForm,
-                      rating: event.target.value,
+                      rating:
+                        event.target.value,
                     })
                   }
                 >
@@ -1509,11 +2013,14 @@ function App() {
                 <textarea
                   rows="4"
                   placeholder="Tell us about your lesson..."
-                  value={reviewForm.comment}
+                  value={
+                    reviewForm.comment
+                  }
                   onChange={(event) =>
                     setReviewForm({
                       ...reviewForm,
-                      comment: event.target.value,
+                      comment:
+                        event.target.value,
                     })
                   }
                 />
@@ -1537,57 +2044,68 @@ function App() {
 
               ) : (
 
-                reviews.map((review) => (
+                reviews.map(
+                  (review) => (
 
-                  <div
-                    className="review-card"
-                    key={review.id}
-                  >
+                    <div
+                      className="review-card"
+                      key={review.id}
+                    >
 
-                    <div className="review-top">
+                      <div className="review-top">
 
-                      <div className="mini-avatar">
-                        {review.student?.user?.name?.charAt(0) ||
-                          "S"}
+                        <div className="mini-avatar">
+                          {review.student
+                            ?.user?.name?.charAt(
+                              0
+                            ) || "S"}
+                        </div>
+
+                        <div>
+
+                          <h3>
+                            {review.student
+                              ?.user?.name ||
+                              "Student"}
+                          </h3>
+
+                          <p>
+                            {review.booking
+                              ?.instrument
+                              ?.name ||
+                              "Music"}{" "}
+                            •{" "}
+                            {review.coach
+                              ?.user?.name ||
+                              "Coach"}
+                          </p>
+
+                        </div>
+
+                        <strong>
+                          ⭐{" "}
+                          {review.rating}/5
+                        </strong>
+
                       </div>
 
-                      <div>
+                      <p className="review-comment">
+                        “
+                        {review.comment ||
+                          "Great learning experience!"}
+                        ”
+                      </p>
 
-                        <h3>
-                          {review.student?.user?.name ||
-                            "Student"}
-                        </h3>
-
-                        <p>
-                          {review.booking?.instrument?.name ||
-                            "Music"}{" "}
-                          •{" "}
-                          {review.coach?.user?.name ||
-                            "Coach"}
-                        </p>
-
-                      </div>
-
-                      <strong>
-                        ⭐ {review.rating}/5
-                      </strong>
+                      <small>
+                        {formatDate(
+                          review.createdAt
+                        )}
+                      </small>
 
                     </div>
 
-                    <p className="review-comment">
-                      “
-                      {review.comment ||
-                        "Great learning experience!"}
-                      ”
-                    </p>
-
-                    <small>
-                      {formatDate(review.createdAt)}
-                    </small>
-
-                  </div>
-
-                ))
+                  )
+                )
 
               )}
 
@@ -1612,8 +2130,8 @@ function App() {
             </h2>
 
             <p>
-              Find a trusted coach, book a trial and
-              take the next step.
+              Find a trusted coach, book a
+              trial and take the next step.
             </p>
 
           </div>
@@ -1653,8 +2171,9 @@ function App() {
             </a>
 
             <p>
-              Helping students discover their musical
-              potential with trusted coaches.
+              Helping students discover their
+              musical potential with trusted
+              coaches.
             </p>
 
           </div>
@@ -1703,13 +2222,15 @@ function App() {
 
       </footer>
 
-      {/* LOGIN MODAL */}
+      {/* AUTH MODAL */}
 
       {authOpen && (
 
         <div
           className="modal-backdrop"
-          onClick={() => setAuthOpen(false)}
+          onClick={() =>
+            setAuthOpen(false)
+          }
         >
 
           <div
@@ -1721,7 +2242,9 @@ function App() {
 
             <button
               className="modal-close"
-              onClick={() => setAuthOpen(false)}
+              onClick={() =>
+                setAuthOpen(false)
+              }
             >
               ×
             </button>
@@ -1735,8 +2258,8 @@ function App() {
             </h2>
 
             <p>
-              This internship project currently uses
-              a demo student account.
+              This internship project currently
+              uses a demo student account.
             </p>
 
             <div className="demo-account">
@@ -1757,15 +2280,17 @@ function App() {
 
             <button
               className="dark-button full"
-              onClick={() => setAuthOpen(false)}
+              onClick={() =>
+                setAuthOpen(false)
+              }
             >
               Continue as Demo Student
             </button>
 
             <small className="demo-note">
-              Authentication UI is currently in demo
-              mode. Real authentication can be connected
-              later.
+              Authentication UI is currently in
+              demo mode. Real authentication can be
+              connected later.
             </small>
 
           </div>
@@ -1778,7 +2303,14 @@ function App() {
   );
 }
 
-function Feature({ icon, title, children }) {
+/*
+ * FEATURE
+ */
+function Feature({
+  icon,
+  title,
+  children,
+}) {
   return (
     <div className="feature-card">
 
@@ -1798,6 +2330,9 @@ function Feature({ icon, title, children }) {
   );
 }
 
+/*
+ * COACH CARD
+ */
 function CoachCard({
   coach,
   rating,
@@ -1805,7 +2340,10 @@ function CoachCard({
 }) {
   const coachInstruments =
     coach.instruments
-      ?.map((item) => item.instrument?.name)
+      ?.map(
+        (item) =>
+          item.instrument?.name
+      )
       .filter(Boolean) || [];
 
   return (
@@ -1814,7 +2352,9 @@ function CoachCard({
       <div className="coach-card-top">
 
         <div className="profile-avatar">
-          {coach.user?.name?.charAt(0) || "C"}
+          {coach.user?.name?.charAt(
+            0
+          ) || "C"}
         </div>
 
         <div className="coach-rating">
@@ -1824,7 +2364,8 @@ function CoachCard({
       </div>
 
       <h3>
-        {coach.user?.name || "Music Coach"}
+        {coach.user?.name ||
+          "Music Coach"}
       </h3>
 
       <div className="coach-tags">
@@ -1850,34 +2391,45 @@ function CoachCard({
 
       <div className="instrument-tags">
 
-        {coachInstruments.map((name) => (
-          <span key={name}>
-            {name}
-          </span>
-        ))}
+        {coachInstruments.map(
+          (name) => (
+            <span key={name}>
+              {name}
+            </span>
+          )
+        )}
 
       </div>
 
       <div className="coach-meta">
 
         <div>
+
           <strong>
-            {coach.experienceYears || 0}+
+            {coach.experienceYears ||
+              0}
+            +
           </strong>
 
           <span>
             Years
           </span>
+
         </div>
 
         <div>
+
           <strong>
-            {money(coach.hourlyRate || 500)}
+            {money(
+              coach.hourlyRate ||
+                500
+            )}
           </strong>
 
           <span>
             Per hour
           </span>
+
         </div>
 
       </div>
@@ -1893,6 +2445,9 @@ function CoachCard({
   );
 }
 
+/*
+ * SECTION TITLE
+ */
 function SectionTitle({
   label,
   title,
@@ -1923,6 +2478,9 @@ function SectionTitle({
   );
 }
 
+/*
+ * STAT CARD
+ */
 function StatCard({
   icon,
   value,
@@ -1947,18 +2505,30 @@ function StatCard({
   );
 }
 
-function StatusBadge({ status }) {
-  const label = String(status || "UNKNOWN")
+/*
+ * STATUS BADGE
+ */
+function StatusBadge({
+  status,
+}) {
+  const label = String(
+    status || "UNKNOWN"
+  )
     .toLowerCase()
     .replaceAll("_", " ");
 
   return (
-    <span className={`status ${label}`}>
+    <span
+      className={`status ${label}`}
+    >
       {label}
     </span>
   );
 }
 
+/*
+ * PROGRESS BLOCK
+ */
 function ProgressBlock({
   title,
   text,
@@ -1969,7 +2539,9 @@ function ProgressBlock({
     <div
       className={`progress-block ${
         positive ? "positive" : ""
-      } ${homework ? "homework" : ""}`}
+      } ${
+        homework ? "homework" : ""
+      }`}
     >
 
       <strong>
@@ -1977,14 +2549,20 @@ function ProgressBlock({
       </strong>
 
       <p>
-        {text || "No information added yet."}
+        {text ||
+          "No information added yet."}
       </p>
 
     </div>
   );
 }
 
-function Empty({ text }) {
+/*
+ * EMPTY STATE
+ */
+function Empty({
+  text,
+}) {
   return (
     <div className="empty-state compact">
 
