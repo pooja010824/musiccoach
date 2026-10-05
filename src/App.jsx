@@ -1,6 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
 
-const API = import.meta.env.VITE_API_URL || "/api";
+const API =
+  import.meta.env.VITE_API_URL ||
+  (import.meta.env.DEV
+    ? "http://localhost:5000/api"
+    : "/api");
 const STUDENT_ID = "cmutjdrzy0001pgf6h68o09v5";
 
 const instruments = [
@@ -85,6 +89,23 @@ function App() {
 
   const currentStudentId =
     authUser?.studentProfileId || STUDENT_ID;
+
+  const authHeaders = () => {
+    const headers = {
+      "Content-Type": "application/json",
+    };
+
+    const savedToken =
+      typeof window !== "undefined"
+        ? window.localStorage.getItem("musiccoach_token")
+        : null;
+
+    if (savedToken) {
+      headers.Authorization = `Bearer ${savedToken}`;
+    }
+
+    return headers;
+  };
 
   const openAuth = (mode) => {
     setAuthMode(mode);
@@ -448,12 +469,8 @@ function App() {
         `${API}/bookings`,
         {
           method: "POST",
-          headers: {
-            "Content-Type":
-              "application/json",
-          },
+          headers: authHeaders(),
           body: JSON.stringify({
-            studentId: currentStudentId,
             coachId: selectedCoach.id,
             instrumentId:
               bookingForm.instrumentId,
@@ -521,10 +538,7 @@ function App() {
         `${API}/bookings/${bookingId}/cancel`,
         {
           method: "PATCH",
-          headers: {
-            "Content-Type":
-              "application/json",
-          },
+          headers: authHeaders(),
         }
       );
 
@@ -606,10 +620,7 @@ function App() {
             `${API}/payments`,
             {
               method: "POST",
-              headers: {
-                "Content-Type":
-                  "application/json",
-              },
+              headers: authHeaders(),
               body: JSON.stringify({
                 bookingId:
                   booking.id,
@@ -644,10 +655,7 @@ function App() {
           `${API}/payments/${paymentId}/status`,
           {
             method: "PATCH",
-            headers: {
-              "Content-Type":
-                "application/json",
-            },
+            headers: authHeaders(),
             body: JSON.stringify({
               status: "PAID",
             }),
@@ -717,17 +725,9 @@ function App() {
           `${API}/reviews`,
           {
             method: "POST",
-            headers: {
-              "Content-Type":
-                "application/json",
-            },
+            headers: authHeaders(),
             body: JSON.stringify({
-              bookingId:
-                booking.id,
-              studentId:
-                booking.studentId,
-              coachId:
-                booking.coachId,
+              bookingId: booking.id,
               rating: Number(
                 reviewForm.rating
               ),

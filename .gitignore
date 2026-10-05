@@ -9,3 +9,5 @@ dist/
 .cursor/
 .devin/
 .windsurf/
+
+.env.local
