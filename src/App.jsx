@@ -5,6 +5,8 @@ const API =
   (import.meta.env.DEV
     ? "http://localhost:5000/api"
     : "/api");
+const STUDENT_ID = "cmutjdrzy0001pgf6h68o09v5";
+
 const instruments = [
   {
     name: "Piano",
@@ -85,6 +87,9 @@ function App() {
       ? window.localStorage.getItem("musiccoach_token")
       : null;
 
+  const currentStudentId =
+    authUser?.studentProfileId || STUDENT_ID;
+
   const authHeaders = () => {
     const headers = {
       "Content-Type": "application/json",
@@ -154,9 +159,6 @@ function App() {
       setAuthOpen(false);
       setAuthError("");
 
-      // Refresh the private dashboard immediately after authentication.
-      await loadData();
-
       setAuthForm({
         name: "",
         email: "",
@@ -187,11 +189,6 @@ function App() {
     );
 
     setAuthUser(null);
-    setBookings([]);
-    setLessons([]);
-    setProgress([]);
-    setReviews([]);
-    setPayments([]);
     setNotice("You have been logged out.");
   };
 
@@ -233,86 +230,31 @@ function App() {
   });
 
   /*
-   * LOAD PUBLIC + PRIVATE DATA
-   *
-   * Coach discovery is public. Student dashboard data is protected
-   * by the backend and is loaded only when a valid token exists.
+   * LOAD ALL DATA
    */
   const loadData = async () => {
     try {
       setLoading(true);
 
-      const savedToken =
-        typeof window !== "undefined"
-          ? window.localStorage.getItem("musiccoach_token")
-          : null;
+      const responses = await Promise.all([
+        fetch(`${API}/coaches`),
+        fetch(`${API}/bookings`),
+        fetch(`${API}/lessons`),
+        fetch(`${API}/progress`),
+        fetch(`${API}/reviews`),
+        fetch(`${API}/payments`),
+      ]);
 
-      const privateHeaders = savedToken
-        ? {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${savedToken}`,
-          }
-        : null;
-
-      const publicResponse = await fetch(`${API}/coaches`);
-
-      if (!publicResponse.ok) {
-        throw new Error("Unable to load coaches.");
-      }
-
-      const coachesJson = await publicResponse.json();
-
-      let bookingsJson = { data: [] };
-      let lessonsJson = { data: [] };
-      let progressJson = { data: [] };
-      let reviewsJson = { data: [] };
-      let paymentsJson = { data: [] };
-
-      if (privateHeaders) {
-        const responses = await Promise.all([
-          fetch(`${API}/bookings`, { headers: privateHeaders }),
-          fetch(`${API}/lessons`, { headers: privateHeaders }),
-          fetch(`${API}/progress`, { headers: privateHeaders }),
-          fetch(`${API}/reviews`, { headers: privateHeaders }),
-          fetch(`${API}/payments`, { headers: privateHeaders }),
-        ]);
-
-        if (responses.some((response) => response.status === 401)) {
-          window.localStorage.removeItem("musiccoach_token");
-          setAuthUser(null);
-          throw new Error("Your session has expired. Please log in again.");
-        }
-
-        const [
-          bookingsResponse,
-          lessonsResponse,
-          progressResponse,
-          reviewsResponse,
-          paymentsResponse,
-        ] = responses;
-
-        [
-          bookingsJson,
-          lessonsJson,
-          progressJson,
-          reviewsJson,
-          paymentsJson,
-        ] = await Promise.all(
-          [
-            bookingsResponse,
-            lessonsResponse,
-            progressResponse,
-            reviewsResponse,
-            paymentsResponse,
-          ].map(async (response) => {
-            if (!response.ok) {
-              throw new Error("Unable to load dashboard data.");
-            }
-
-            return response.json();
-          })
-        );
-      }
+      const [
+        coachesJson,
+        bookingsJson,
+        lessonsJson,
+        progressJson,
+        reviewsJson,
+        paymentsJson,
+      ] = await Promise.all(
+        responses.map((response) => response.json())
+      );
 
       const apiCoaches = safeArray(coachesJson.data);
       const apiBookings = safeArray(bookingsJson.data);
@@ -320,8 +262,10 @@ function App() {
       /*
        * COACH FALLBACK
        *
-       * If a logged-in user's booking contains a coach that is not
-       * returned by the public coach endpoint, recover that coach here.
+       * If /api/coaches does not return a coach but that coach
+       * exists inside a booking, recover that coach here.
+       *
+       * This makes Find a Coach more reliable in production.
        */
       const coachMap = new Map();
 
@@ -339,37 +283,64 @@ function App() {
         if (!coachMap.has(bookingCoach.id)) {
           coachMap.set(bookingCoach.id, {
             ...bookingCoach,
+
             instruments:
               bookingCoach.instruments?.length
                 ? bookingCoach.instruments
                 : booking.instrument
-                  ? [{ instrument: booking.instrument }]
+                  ? [
+                      {
+                        instrument: booking.instrument,
+                      },
+                    ]
                   : [],
           });
+        } else {
+          const existingCoach =
+            coachMap.get(bookingCoach.id);
+
+          if (
+            (!existingCoach.instruments ||
+              existingCoach.instruments.length === 0) &&
+            booking.instrument
+          ) {
+            existingCoach.instruments = [
+              {
+                instrument: booking.instrument,
+              },
+            ];
+          }
         }
       });
 
-      setCoaches(Array.from(coachMap.values()));
+      const finalCoaches = Array.from(
+        coachMap.values()
+      );
+
+      setCoaches(finalCoaches);
       setBookings(apiBookings);
-      setLessons(safeArray(lessonsJson.data));
-      setProgress(safeArray(progressJson.data));
-      setReviews(safeArray(reviewsJson.data));
-      setPayments(safeArray(paymentsJson.data));
+
+      setLessons(
+        safeArray(lessonsJson.data)
+      );
+
+      setProgress(
+        safeArray(progressJson.data)
+      );
+
+      setReviews(
+        safeArray(reviewsJson.data)
+      );
+
+      setPayments(
+        safeArray(paymentsJson.data)
+      );
     } catch (error) {
       console.error(error);
 
-      if (error.message?.includes("session has expired")) {
-        setBookings([]);
-        setLessons([]);
-        setProgress([]);
-        setReviews([]);
-        setPayments([]);
-      } else {
-        setNotice(
-          error.message ||
-            "Unable to load data. Please make sure the backend is running."
-        );
-      }
+      setNotice(
+        "Unable to load data. Please make sure the backend is running."
+      );
     } finally {
       setLoading(false);
     }
@@ -425,19 +396,9 @@ function App() {
    * COACH RATING
    */
   const getCoachRating = (coachId) => {
-    const coach = coaches.find(
-      (item) => item.id === coachId
-    );
-
-    if (
-      coach?.averageRating !== null &&
-      coach?.averageRating !== undefined
-    ) {
-      return Number(coach.averageRating).toFixed(1);
-    }
-
     const coachReviews = reviews.filter(
-      (review) => review.coachId === coachId
+      (review) =>
+        review.coachId === coachId
     );
 
     if (!coachReviews.length) {
@@ -450,7 +411,9 @@ function App() {
       0
     );
 
-    return (total / coachReviews.length).toFixed(1);
+    return (
+      total / coachReviews.length
+    ).toFixed(1);
   };
 
   /*
