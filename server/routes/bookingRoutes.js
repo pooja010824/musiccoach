@@ -1,49 +1,62 @@
-const express = require("express");
+﻿const express = require("express");
 const prisma = require("../prisma");
 const { requireAuth, requireRole } = require("../middleware/authMiddleware");
 
 const router = express.Router();
 
 
-// GET ALL BOOKINGS
+// GET MY BOOKINGS
 router.get(
   "/",
   requireAuth,
   requireRole("STUDENT", "PARENT", "ADMIN"),
   async (req, res) => {
-  try {
-    const bookings = await prisma.booking.findMany({
-      include: {
-        student: {
-          include: {
-            user: true,
-          },
-        },
-        coach: {
-          include: {
-            user: true,
-          },
-        },
-        instrument: true,
-      },
-      orderBy: {
-        createdAt: "desc",
-      },
-    });
+    try {
+      const where =
+        req.user.role === "ADMIN"
+          ? {}
+          : (() => {
+              return {
+                student: {
+                  userId: req.user.userId,
+                },
+              };
+            })();
 
-    res.json({
-      success: true,
-      data: bookings,
-    });
-  } catch (error) {
-    console.error("Failed to fetch bookings:", error);
+      const bookings = await prisma.booking.findMany({
+        where,
+        include: {
+          student: {
+            include: {
+              user: true,
+            },
+          },
+          coach: {
+            include: {
+              user: true,
+            },
+          },
+          instrument: true,
+        },
+        orderBy: {
+          createdAt: "desc",
+        },
+      });
 
-    res.status(500).json({
-      success: false,
-      message: "Failed to fetch bookings",
-    });
+      res.json({
+        success: true,
+        data: bookings,
+      });
+    } catch (error) {
+      console.error("Failed to fetch bookings:", error);
+
+      res.status(500).json({
+        success: false,
+        message: "Failed to fetch bookings",
+      });
+    }
   }
-});
+);
 
 
 // CREATE BOOKING

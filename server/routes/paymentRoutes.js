@@ -1,53 +1,66 @@
-const express = require("express");
+﻿const express = require("express");
 const prisma = require("../prisma");
 const { requireAuth, requireRole } = require("../middleware/authMiddleware");
 
 const router = express.Router();
 
 
-// GET ALL PAYMENTS
+// GET MY PAYMENTS
 router.get(
   "/",
   requireAuth,
   requireRole("STUDENT", "PARENT", "ADMIN"),
   async (req, res) => {
-  try {
-    const payments = await prisma.payment.findMany({
-      include: {
-        booking: {
-          include: {
-            student: {
-              include: {
-                user: true,
+    try {
+      const where =
+        req.user.role === "ADMIN"
+          ? {}
+          : {
+              booking: {
+                student: {
+                  userId: req.user.userId,
+                },
               },
-            },
-            coach: {
-              include: {
-                user: true,
+            };
+
+      const payments = await prisma.payment.findMany({
+        where,
+        include: {
+          booking: {
+            include: {
+              student: {
+                include: {
+                  user: true,
+                },
               },
+              coach: {
+                include: {
+                  user: true,
+                },
+              },
+              instrument: true,
             },
-            instrument: true,
           },
         },
-      },
-      orderBy: {
-        createdAt: "desc",
-      },
-    });
+        orderBy: {
+          createdAt: "desc",
+        },
+      });
 
-    res.json({
-      success: true,
-      data: payments,
-    });
-  } catch (error) {
-    console.error("Failed to fetch payments:", error);
+      res.json({
+        success: true,
+        data: payments,
+      });
+    } catch (error) {
+      console.error("Failed to fetch payments:", error);
 
-    res.status(500).json({
-      success: false,
-      message: "Failed to fetch payments",
-    });
+      res.status(500).json({
+        success: false,
+        message: "Failed to fetch payments",
+      });
+    }
   }
-});
+);
 
 
 // CREATE PAYMENT
