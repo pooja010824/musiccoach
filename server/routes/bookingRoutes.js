@@ -6,7 +6,11 @@ const router = express.Router();
 
 
 // GET ALL BOOKINGS
-router.get("/", async (req, res) => {
+router.get(
+  "/",
+  requireAuth,
+  requireRole("STUDENT", "PARENT", "ADMIN"),
+  async (req, res) => {
   try {
     const bookings = await prisma.booking.findMany({
       include: {

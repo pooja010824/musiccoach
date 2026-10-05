@@ -6,7 +6,11 @@ const router = express.Router();
 
 
 // GET ALL PAYMENTS
-router.get("/", async (req, res) => {
+router.get(
+  "/",
+  requireAuth,
+  requireRole("STUDENT", "PARENT", "ADMIN"),
+  async (req, res) => {
   try {
     const payments = await prisma.payment.findMany({
       include: {
