@@ -1775,3 +1775,135 @@ a {
   background-image: none !important;
   font-size: revert !important;
 }
+
+/* ===== FINAL MUSICCOACH EMOJI ICONS ===== */
+
+.brand-icon::before {
+  content: "\1F3B5" !important;
+}
+
+.music-note::before {
+  content: "\1F3B5" !important;
+}
+
+.feature-icon:nth-child(1)::before {
+  content: "\1F3B9" !important;
+}
+
+.feature-icon:nth-child(2)::before {
+  content: "\1F4C5" !important;
+}
+
+.feature-icon:nth-child(3)::before {
+  content: "\1F4C8" !important;
+}
+
+.feature-icon:nth-child(4)::before {
+  content: "\2B50" !important;
+}
+
+.instrument-card:nth-child(1) .instrument-icon::before {
+  content: "\1F3B9" !important;
+}
+
+.instrument-card:nth-child(2) .instrument-icon::before {
+  content: "\1F3BB" !important;
+}
+
+.instrument-card:nth-child(3) .instrument-icon::before {
+  content: "\1F3A4" !important;
+}
+
+.verified-badge::before {
+  content: "\2705" !important;
+}
+
+.checked-badge::before {
+  content: "\1F6E1" !important;
+}
+
+.rating::before,
+.coach-rating::before {
+  content: "\2B50" !important;
+}
+
+.stat-card:nth-child(1) > span:first-child::before {
+  content: "\1F3B5" !important;
+}
+
+.stat-card:nth-child(2) > span:first-child::before {
+  content: "\1F3A4" !important;
+}
+
+.stat-card:nth-child(3) > span:first-child::before {
+  content: "\1F465" !important;
+}
+
+.stat-card:nth-child(4) > span:first-child::before {
+  content: "\1F3B6" !important;
+}
+
+.stat-card:nth-child(5) > span:first-child::before {
+  content: "\1F3AF" !important;
+}
+
+.stat-card:nth-child(6) > span:first-child::before {
+  content: "\1F4C8" !important;
+}
+
+.booking-info .date::before,
+.info-list .date::before {
+  content: "\1F4C5" !important;
+}
+
+.booking-info .time::before,
+.info-list .time::before {
+  content: "\23F0" !important;
+}
+
+.booking-info .duration::before,
+.info-list .duration::before {
+  content: "\23F1" !important;
+}
+
+.paid-badge::before {
+  content: "\2705" !important;
+}
+
+.progress-icon::before {
+  content: "\1F4C8" !important;
+}
+
+.review-rating::before {
+  content: "\2B50" !important;
+}
+
+.cta-arrow::before {
+  content: "\2192" !important;
+}
+
+/* Make emoji visible above old SVG backgrounds */
+.brand-icon,
+.music-note,
+.feature-icon,
+.instrument-icon,
+.verified-badge,
+.checked-badge,
+.rating,
+.coach-rating,
+.stat-card > span:first-child,
+.booking-info .date,
+.booking-info .time,
+.booking-info .duration,
+.info-list .date,
+.info-list .time,
+.info-list .duration,
+.paid-badge,
+.progress-icon,
+.review-rating,
+.cta-arrow {
+  background-image: none !important;
+  -webkit-mask-image: none !important;
+  mask-image: none !important;
+}
+
