@@ -1,4 +1,4 @@
-﻿import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 const API = import.meta.env.VITE_API_URL || "/api";
 const STUDENT_ID = "cmutjdrzy0001pgf6h68o09v5";
@@ -6,17 +6,17 @@ const STUDENT_ID = "cmutjdrzy0001pgf6h68o09v5";
 const instruments = [
   {
     name: "Piano",
-    icon: "🎹",
+    icon: "",
     text: "Beginner to advanced",
   },
   {
     name: "Violin",
-    icon: "🎻",
+    icon: "",
     text: "Classical & modern",
   },
   {
     name: "Vocal",
-    icon: "🎤",
+    icon: "",
     text: "Voice & performance",
   },
 ];
@@ -25,11 +25,11 @@ const safeArray = (value) =>
   Array.isArray(value) ? value : [];
 
 const formatDate = (value) => {
-  if (!value) return "â€”";
+  if (!value) return "";
 
   const date = new Date(value);
 
-  if (Number.isNaN(date.getTime())) return "â€”";
+  if (Number.isNaN(date.getTime())) return "";
 
   return date.toLocaleDateString("en-IN", {
     day: "numeric",
@@ -39,7 +39,7 @@ const formatDate = (value) => {
 };
 
 const money = (value) =>
-  `₹${Number(value || 0).toLocaleString("en-IN")}`;
+  `Rs ${Number(value || 0).toLocaleString("en-IN")}`;
 
 function App() {
   const [coaches, setCoaches] = useState([]);
@@ -503,7 +503,7 @@ function App() {
       }
 
       setNotice(
-        "ðŸŽ‰ Trial lesson booked successfully!"
+        " Trial lesson booked successfully!"
       );
 
       await loadData();
@@ -676,7 +676,7 @@ function App() {
       }
 
       setNotice(
-        "💳 Payment successful! Demo transaction completed."
+        " Payment successful! Demo transaction completed."
       );
 
       await loadData();
@@ -762,7 +762,7 @@ function App() {
       });
 
       setNotice(
-        "⭐ Thank you! Your review was submitted."
+        " Thank you! Your review was submitted."
       );
 
       await loadData();
@@ -835,7 +835,7 @@ function App() {
               setNotice("")
             }
           >
-            Ã—
+            
           </button>
         </div>
       )}
@@ -849,7 +849,7 @@ function App() {
           className="brand"
         >
           <span className="brand-icon">
-            🎵
+            
           </span>
 
           <span>
@@ -924,7 +924,7 @@ function App() {
           <div className="hero-content">
 
             <div className="eyebrow">
-              ✨ TRUSTED MUSIC LEARNING PLATFORM
+               TRUSTED MUSIC LEARNING PLATFORM
             </div>
 
             <h1>
@@ -948,7 +948,7 @@ function App() {
                 href="#coaches"
                 className="dark-button"
               >
-                Find Your Coach →
+                Find Your Coach 
               </a>
 
               <a
@@ -962,15 +962,15 @@ function App() {
 
             <div className="trust-row">
               <span>
-                ✓ Verified Coaches
+                 Verified Coaches
               </span>
 
               <span>
-                ✓ Flexible Scheduling
+                 Flexible Scheduling
               </span>
 
               <span>
-                ✓ Progress Tracking
+                 Progress Tracking
               </span>
             </div>
 
@@ -980,13 +980,13 @@ function App() {
 
             <div className="music-orb">
               <div className="music-note">
-                â™«
+                
               </div>
             </div>
 
             <div className="floating-card rating-card">
               <strong>
-                ⭐ 5.0
+                 5.0
               </strong>
 
               <span>
@@ -996,7 +996,7 @@ function App() {
 
             <div className="floating-card lesson-card">
               <strong>
-                🎵 Weekly
+                 Weekly
               </strong>
 
               <span>
@@ -1111,7 +1111,7 @@ function App() {
                   </span>
 
                   <small>
-                    Explore coaches →
+                    Explore coaches 
                   </small>
 
                 </button>
@@ -1144,7 +1144,7 @@ function App() {
           <div className="feature-grid">
 
             <Feature
-              icon="🛡️"
+              icon=""
               title="Trusted Coaches"
             >
               Discover experienced and verified
@@ -1152,7 +1152,7 @@ function App() {
             </Feature>
 
             <Feature
-              icon="📅"
+              icon=""
               title="Flexible Lessons"
             >
               Choose lesson times that work
@@ -1160,7 +1160,7 @@ function App() {
             </Feature>
 
             <Feature
-              icon="📈"
+              icon=""
               title="Track Progress"
             >
               See notes, strengths, improvements
@@ -1168,7 +1168,7 @@ function App() {
             </Feature>
 
             <Feature
-              icon="⭐"
+              icon=""
               title="Real Reviews"
             >
               Learn from the experiences of
@@ -1218,7 +1218,7 @@ function App() {
 
             <input
               className="search-input"
-              placeholder="ðŸ”Ž Search coach or instrument..."
+              placeholder=" Search coach or instrument..."
               value={search}
               onChange={(event) =>
                 setSearch(
@@ -1277,7 +1277,7 @@ function App() {
             <div className="empty-state">
 
               <div className="empty-icon">
-                🎵
+                
               </div>
 
               <h3>
@@ -1345,7 +1345,7 @@ function App() {
                 </h2>
 
                 <div className="rating-line">
-                  ⭐{" "}
+                  {" "}
                   {getCoachRating(
                     selectedCoach.id
                   )}
@@ -1372,13 +1372,13 @@ function App() {
 
                   {selectedCoach.isVerified && (
                     <span>
-                      ✓ Verified
+                       Verified
                     </span>
                   )}
 
                   {selectedCoach.backgroundCheck && (
                     <span>
-                      🛡️ Background Checked
+                       Background Checked
                     </span>
                   )}
 
@@ -1629,7 +1629,7 @@ function App() {
                   className="dark-button full"
                   type="submit"
                 >
-                  Book Trial Lesson →
+                  Book Trial Lesson 
                 </button>
 
               </form>
@@ -1671,13 +1671,13 @@ function App() {
           <div className="dashboard-stats">
 
             <StatCard
-              icon="📅"
+              icon=""
               value={activeBookings.length}
               label="Total Bookings"
             />
 
             <StatCard
-              icon="🎓"
+              icon=""
               value={
                 completedLessons.length
               }
@@ -1685,13 +1685,13 @@ function App() {
             />
 
             <StatCard
-              icon="⭐"
+              icon=""
               value={averageRating}
               label="Average Rating"
             />
 
             <StatCard
-              icon="💳"
+              icon=""
               value={money(paidAmount)}
               label="Amount Paid"
             />
@@ -1777,7 +1777,7 @@ function App() {
 
                         <div>
                           <span>
-                            📅 Date
+                             Date
                           </span>
 
                           <strong>
@@ -1789,7 +1789,7 @@ function App() {
 
                         <div>
                           <span>
-                            ðŸ• Time
+                             Time
                           </span>
 
                           <strong>
@@ -1801,7 +1801,7 @@ function App() {
 
                         <div>
                           <span>
-                            â± Duration
+                             Duration
                           </span>
 
                           <strong>
@@ -1845,7 +1845,7 @@ function App() {
                           "PAID" ? (
 
                           <span className="paid-badge">
-                            ✓ Paid
+                             Paid
                           </span>
 
                         ) : (
@@ -1858,7 +1858,7 @@ function App() {
                               )
                             }
                           >
-                            💳 Pay Now
+                             Pay Now
                           </button>
 
                         )}
@@ -2002,7 +2002,7 @@ function App() {
                     <div className="progress-card-head">
 
                       <span>
-                        📈 Progress Note
+                         Progress Note
                       </span>
 
                       <small>
@@ -2115,7 +2115,7 @@ function App() {
                           ?.coach?.user
                           ?.name ||
                           "Coach"}{" "}
-                        â€”{" "}
+                        {" "}
                         {lesson.booking
                           ?.instrument
                           ?.name ||
@@ -2147,23 +2147,23 @@ function App() {
                 >
 
                   <option value="5">
-                    ⭐⭐⭐⭐⭐ â€” Excellent
+                      Excellent
                   </option>
 
                   <option value="4">
-                    ⭐⭐⭐⭐ â€” Very Good
+                      Very Good
                   </option>
 
                   <option value="3">
-                    ⭐⭐⭐ â€” Good
+                      Good
                   </option>
 
                   <option value="2">
-                    ⭐⭐ â€” Needs Improvement
+                      Needs Improvement
                   </option>
 
                   <option value="1">
-                    ⭐ â€” Poor
+                      Poor
                   </option>
 
                 </select>
@@ -2238,7 +2238,7 @@ function App() {
                               ?.instrument
                               ?.name ||
                               "Music"}{" "}
-                            â€¢{" "}
+                            {" "}
                             {review.coach
                               ?.user?.name ||
                               "Coach"}
@@ -2247,17 +2247,17 @@ function App() {
                         </div>
 
                         <strong>
-                          ⭐{" "}
+                          {" "}
                           {review.rating}/5
                         </strong>
 
                       </div>
 
                       <p className="review-comment">
-                        â€œ
+                        
                         {review.comment ||
                           "Great learning experience!"}
-                        â€
+                        
                       </p>
 
                       <small>
@@ -2304,7 +2304,7 @@ function App() {
             href="#coaches"
             className="light-button"
           >
-            Find My Coach →
+            Find My Coach 
           </a>
 
         </section>
@@ -2325,7 +2325,7 @@ function App() {
             >
 
               <span className="brand-icon">
-                🎵
+                
               </span>
 
               <span>
@@ -2381,7 +2381,7 @@ function App() {
         </div>
 
         <div className="footer-bottom">
-          Â© 2026 MusicCoach. All rights reserved.
+           2026 MusicCoach. All rights reserved.
         </div>
 
       </footer>
@@ -2410,7 +2410,7 @@ function App() {
                 setAuthOpen(false)
               }
             >
-              Ã—
+              
             </button>
 
             <div className="auth-icon">
@@ -2608,7 +2608,7 @@ function CoachCard({
         </div>
 
         <div className="coach-rating">
-          ⭐ {rating}
+           {rating}
         </div>
 
       </div>
@@ -2622,13 +2622,13 @@ function CoachCard({
 
         {coach.isVerified && (
           <span>
-            ✓ Verified
+             Verified
           </span>
         )}
 
         {coach.backgroundCheck && (
           <span>
-            🛡️ Checked
+             Checked
           </span>
         )}
 
@@ -2688,7 +2688,7 @@ function CoachCard({
         className="dark-button full"
         onClick={onSelect}
       >
-        View Profile & Book →
+        View Profile & Book 
       </button>
 
     </article>
@@ -2817,7 +2817,7 @@ function Empty({
     <div className="empty-state compact">
 
       <div className="empty-icon">
-        🎵
+        
       </div>
 
       <p>
