@@ -6,17 +6,17 @@ const STUDENT_ID = "cmutjdrzy0001pgf6h68o09v5";
 const instruments = [
   {
     name: "Piano",
-    icon: "ðŸŽ¹",
+    icon: "🎹",
     text: "Beginner to advanced",
   },
   {
     name: "Violin",
-    icon: "ðŸŽ»",
+    icon: "🎻",
     text: "Classical & modern",
   },
   {
     name: "Vocal",
-    icon: "ðŸŽ¤",
+    icon: "🎤",
     text: "Voice & performance",
   },
 ];
@@ -849,7 +849,7 @@ function App() {
           className="brand"
         >
           <span className="brand-icon">
-            ðŸŽµ
+            🎵
           </span>
 
           <span>
@@ -996,7 +996,7 @@ function App() {
 
             <div className="floating-card lesson-card">
               <strong>
-                ðŸŽµ Weekly
+                🎵 Weekly
               </strong>
 
               <span>
@@ -1152,7 +1152,7 @@ function App() {
             </Feature>
 
             <Feature
-              icon="ðŸ“…"
+              icon="📅"
               title="Flexible Lessons"
             >
               Choose lesson times that work
@@ -1277,7 +1277,7 @@ function App() {
             <div className="empty-state">
 
               <div className="empty-icon">
-                ðŸŽµ
+                🎵
               </div>
 
               <h3>
@@ -1378,7 +1378,7 @@ function App() {
 
                   {selectedCoach.backgroundCheck && (
                     <span>
-                      ðŸ›¡ Background Checked
+                      🛡️ Background Checked
                     </span>
                   )}
 
@@ -1671,13 +1671,13 @@ function App() {
           <div className="dashboard-stats">
 
             <StatCard
-              icon="ðŸ“…"
+              icon="📅"
               value={activeBookings.length}
               label="Total Bookings"
             />
 
             <StatCard
-              icon="ðŸŽ“"
+              icon="🎓"
               value={
                 completedLessons.length
               }
@@ -1777,7 +1777,7 @@ function App() {
 
                         <div>
                           <span>
-                            ðŸ“… Date
+                            📅 Date
                           </span>
 
                           <strong>
@@ -2325,7 +2325,7 @@ function App() {
             >
 
               <span className="brand-icon">
-                ðŸŽµ
+                🎵
               </span>
 
               <span>
@@ -2628,7 +2628,7 @@ function CoachCard({
 
         {coach.backgroundCheck && (
           <span>
-            ðŸ›¡ Checked
+            🛡️ Checked
           </span>
         )}
 
@@ -2817,7 +2817,7 @@ function Empty({
     <div className="empty-state compact">
 
       <div className="empty-icon">
-        ðŸŽµ
+        🎵
       </div>
 
       <p>
