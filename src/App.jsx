@@ -1,10 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 
-const API =
-  import.meta.env.VITE_API_URL ||
-  (import.meta.env.DEV
-    ? "http://localhost:5000/api"
-    : "/api");
+const API = import.meta.env.VITE_API_URL || "/api";
 const STUDENT_ID = "cmutjdrzy0001pgf6h68o09v5";
 
 const instruments = [
@@ -87,9 +83,6 @@ function App() {
       ? window.localStorage.getItem("musiccoach_token")
       : null;
 
-  const currentStudentId =
-    authUser?.studentProfileId || STUDENT_ID;
-
   const authHeaders = () => {
     const headers = {
       "Content-Type": "application/json",
@@ -106,6 +99,9 @@ function App() {
 
     return headers;
   };
+
+  const currentStudentId =
+    authUser?.studentProfileId || STUDENT_ID;
 
   const openAuth = (mode) => {
     setAuthMode(mode);
@@ -156,6 +152,7 @@ function App() {
       );
 
       setAuthUser(result.data);
+      await loadData();
       setAuthOpen(false);
       setAuthError("");
 
@@ -189,6 +186,11 @@ function App() {
     );
 
     setAuthUser(null);
+    setBookings([]);
+    setLessons([]);
+    setProgress([]);
+    setReviews([]);
+    setPayments([]);
     setNotice("You have been logged out.");
   };
 
@@ -236,13 +238,15 @@ function App() {
     try {
       setLoading(true);
 
+      const headers = authHeaders();
+
       const responses = await Promise.all([
-        fetch(`${API}/coaches`),
-        fetch(`${API}/bookings`),
-        fetch(`${API}/lessons`),
-        fetch(`${API}/progress`),
-        fetch(`${API}/reviews`),
-        fetch(`${API}/payments`),
+        fetch(`${API}/coaches`, { headers }),
+        fetch(`${API}/bookings`, { headers }),
+        fetch(`${API}/lessons`, { headers }),
+        fetch(`${API}/progress`, { headers }),
+        fetch(`${API}/reviews`, { headers }),
+        fetch(`${API}/payments`, { headers }),
       ]);
 
       const [
@@ -471,6 +475,7 @@ function App() {
           method: "POST",
           headers: authHeaders(),
           body: JSON.stringify({
+            studentId: currentStudentId,
             coachId: selectedCoach.id,
             instrumentId:
               bookingForm.instrumentId,
@@ -727,7 +732,12 @@ function App() {
             method: "POST",
             headers: authHeaders(),
             body: JSON.stringify({
-              bookingId: booking.id,
+              bookingId:
+                booking.id,
+              studentId:
+                booking.studentId,
+              coachId:
+                booking.coachId,
               rating: Number(
                 reviewForm.rating
               ),
@@ -2398,7 +2408,7 @@ function App() {
             </button>
 
             <div className="auth-icon">
-              🎵
+              ??
             </div>
 
             <h2>
