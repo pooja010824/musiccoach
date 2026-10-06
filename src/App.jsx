@@ -1,4 +1,4 @@
-﻿import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 const API = import.meta.env.VITE_API_URL || "/api";
 const STUDENT_ID = "cmutjdrzy0001pgf6h68o09v5";
@@ -6,17 +6,17 @@ const STUDENT_ID = "cmutjdrzy0001pgf6h68o09v5";
 const instruments = [
   {
     name: "Piano",
-    icon: "",
+    icon: "\u{1F3B9}",
     text: "Beginner to advanced",
   },
   {
     name: "Violin",
-    icon: "",
+    icon: "\u{1F3BB}",
     text: "Classical & modern",
   },
   {
     name: "Vocal",
-    icon: "",
+    icon: "\u{1F3A4}",
     text: "Voice & performance",
   },
 ];
@@ -1378,7 +1378,7 @@ function App() {
 
                   {selectedCoach.backgroundCheck && (
                     <span>
-                       Background Checked
+                       {"\u{1F6E1}"} Background Checked
                     </span>
                   )}
 

@@ -1907,3 +1907,38 @@ a {
   mask-image: none !important;
 }
 
+
+/* FINAL EMOJI MODE */
+.brand-icon::before,
+.music-note::before,
+.feature-icon::before,
+.instrument-icon::before,
+.verified-badge::before,
+.checked-badge::before,
+.rating::before,
+.coach-rating::before,
+.progress-icon::before,
+.review-rating::before,
+.cta-arrow::before {
+  content: none !important;
+  background: none !important;
+  mask: none !important;
+  -webkit-mask: none !important;
+}
+
+.brand-icon,
+.music-note,
+.feature-icon,
+.instrument-icon,
+.verified-badge,
+.checked-badge,
+.rating,
+.coach-rating,
+.progress-icon,
+.review-rating,
+.cta-arrow {
+  background-image: none !important;
+  -webkit-mask-image: none !important;
+  mask-image: none !important;
+}
+
