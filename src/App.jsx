@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+﻿import { useEffect, useMemo, useState } from "react";
 
 const API = import.meta.env.VITE_API_URL || "/api";
 const STUDENT_ID = "cmutjdrzy0001pgf6h68o09v5";
@@ -503,7 +503,7 @@ function App() {
       }
 
       setNotice(
-        " Trial lesson booked successfully!"
+        "Trial lesson booked successfully!"
       );
 
       await loadData();
@@ -676,7 +676,7 @@ function App() {
       }
 
       setNotice(
-        " Payment successful! Demo transaction completed."
+        "Payment successful! Demo transaction completed."
       );
 
       await loadData();
@@ -762,7 +762,7 @@ function App() {
       });
 
       setNotice(
-        " Thank you! Your review was submitted."
+        "Thank you! Your review was submitted."
       );
 
       await loadData();
@@ -1629,7 +1629,7 @@ function App() {
                   className="dark-button full"
                   type="submit"
                 >
-                  Book Trial Lesson 
+                  {"\u{1F3B5}"} Book Trial Lesson
                 </button>
 
               </form>
@@ -2304,7 +2304,7 @@ function App() {
             href="#coaches"
             className="light-button"
           >
-            Find My Coach 
+            Find My Coach {"\u{2192}"}
           </a>
 
         </section>
@@ -2381,7 +2381,7 @@ function App() {
         </div>
 
         <div className="footer-bottom">
-           2026 MusicCoach. All rights reserved.
+           {"\u{00A9}"} 2026 MusicCoach. All rights reserved.
         </div>
 
       </footer>
@@ -2688,7 +2688,7 @@ function CoachCard({
         className="dark-button full"
         onClick={onSelect}
       >
-        View Profile & Book 
+        View Profile & Book {"\u{2192}"}
       </button>
 
     </article>
@@ -2829,3 +2829,4 @@ function Empty({
 }
 
 export default App;
+
