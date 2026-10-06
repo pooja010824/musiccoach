@@ -4,7 +4,6 @@ const { requireAuth, requireRole } = require("../middleware/authMiddleware");
 
 const router = express.Router();
 
-
 // GET MY BOOKINGS
 router.get(
   "/",
@@ -15,13 +14,11 @@ router.get(
       const where =
         req.user.role === "ADMIN"
           ? {}
-          : (() => {
-              return {
-                student: {
-                  userId: req.user.userId,
-                },
-              };
-            })();
+          : {
+              student: {
+                userId: req.user.userId,
+              },
+            };
 
       const bookings = await prisma.booking.findMany({
         where,
@@ -58,7 +55,6 @@ router.get(
   }
 );
 
-
 // CREATE BOOKING
 router.post(
   "/",
@@ -75,7 +71,6 @@ router.post(
         startDate,
       } = req.body;
 
-      // Get the logged-in user's student profile
       const studentProfile = await prisma.studentProfile.findUnique({
         where: {
           userId: req.user.userId,
@@ -96,6 +91,17 @@ router.post(
         });
       }
 
+      // Validate lesson time
+      if (
+        typeof startTime !== "string" ||
+        !/^(?:[01]\d|2[0-3]):[0-5]\d$/.test(startTime)
+      ) {
+        return res.status(400).json({
+          success: false,
+          message: "Invalid lesson start time.",
+        });
+      }
+
       const duration = Number(durationMins || 60);
 
       if (![30, 45, 60, 90, 120].includes(duration)) {
@@ -105,7 +111,18 @@ router.post(
         });
       }
 
-      const parsedDate = new Date(startDate);
+      // Normalize the requested calendar date.
+      // The frontend may send either YYYY-MM-DD or an ISO datetime.
+      const dateOnly = String(startDate).slice(0, 10);
+
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(dateOnly)) {
+        return res.status(400).json({
+          success: false,
+          message: "Invalid start date.",
+        });
+      }
+
+      const parsedDate = new Date(`${dateOnly}T00:00:00`);
 
       if (Number.isNaN(parsedDate.getTime())) {
         return res.status(400).json({
@@ -114,7 +131,23 @@ router.post(
         });
       }
 
-      // Check coach exists
+      // Prevent past bookings.
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+
+      if (parsedDate < today) {
+        return res.status(400).json({
+          success: false,
+          message: "Past dates cannot be booked.",
+        });
+      }
+
+      // Store the calendar date consistently as UTC midnight.
+      const dayStart = new Date(`${dateOnly}T00:00:00.000Z`);
+      const dayEnd = new Date(`${dateOnly}T00:00:00.000Z`);
+      dayEnd.setUTCDate(dayEnd.getUTCDate() + 1);
+
+      // Check coach exists.
       const coach = await prisma.coachProfile.findUnique({
         where: {
           id: coachId,
@@ -128,7 +161,7 @@ router.post(
         });
       }
 
-      // Check instrument exists
+      // Check instrument exists.
       const instrument = await prisma.instrument.findUnique({
         where: {
           id: instrumentId,
@@ -142,7 +175,7 @@ router.post(
         });
       }
 
-      // Check coach teaches this instrument
+      // Check coach teaches this instrument.
       const coachInstrument =
         await prisma.coachInstrument.findUnique({
           where: {
@@ -160,6 +193,58 @@ router.post(
         });
       }
 
+      // Prevent the same student from creating
+      // another active booking at the same coach/date/time.
+      const existingStudentBooking =
+        await prisma.booking.findFirst({
+          where: {
+            studentId: studentProfile.id,
+            coachId,
+            instrumentId,
+            startDate: {
+              gte: dayStart,
+              lt: dayEnd,
+            },
+            startTime,
+            status: {
+              not: "CANCELLED",
+            },
+          },
+        });
+
+      if (existingStudentBooking) {
+        return res.status(409).json({
+          success: false,
+          message:
+            "You already have an active booking for this coach at this date and time.",
+        });
+      }
+
+      // Prevent the coach from being booked by another student
+      // at the same date/time.
+      const existingCoachBooking =
+        await prisma.booking.findFirst({
+          where: {
+            coachId,
+            startDate: {
+              gte: dayStart,
+              lt: dayEnd,
+            },
+            startTime,
+            status: {
+              not: "CANCELLED",
+            },
+          },
+        });
+
+      if (existingCoachBooking) {
+        return res.status(409).json({
+          success: false,
+          message:
+            "This coach is already booked for the selected date and time.",
+        });
+      }
+
       const booking = await prisma.booking.create({
         data: {
           studentId: studentProfile.id,
@@ -168,7 +253,7 @@ router.post(
           dayOfWeek: Number(dayOfWeek),
           startTime,
           durationMins: duration,
-          startDate: parsedDate,
+          startDate: dayStart,
           status: "TRIAL",
         },
         include: {
@@ -201,7 +286,6 @@ router.post(
   }
 );
 
-
 // CANCEL BOOKING
 router.patch(
   "/:id/cancel",
@@ -222,7 +306,21 @@ router.patch(
         });
       }
 
-      // Admin can cancel any booking
+      if (booking.status === "CANCELLED") {
+        return res.status(400).json({
+          success: false,
+          message: "This booking is already cancelled.",
+        });
+      }
+
+      if (booking.status === "COMPLETED") {
+        return res.status(400).json({
+          success: false,
+          message: "Completed bookings cannot be cancelled.",
+        });
+      }
+
+      // Admin can cancel any booking.
       if (req.user.role !== "ADMIN") {
         const studentProfile =
           await prisma.studentProfile.findUnique({
@@ -275,6 +373,5 @@ router.patch(
     }
   }
 );
-
 
 module.exports = router;
