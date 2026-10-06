@@ -7,8 +7,7 @@
         "dev": "vite",
         "build": "prisma generate && vite build",
         "start": "tsx server/index.js",
-        "test": "echo \"Error: no test specified\" && exit 1",
-        "postinstall": "prisma skills sync || exit 0"
+        "test": "echo \"Error: no test specified\" && exit 1"
     },
     "keywords": [],
     "author": "",

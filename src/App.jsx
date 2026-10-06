@@ -39,7 +39,7 @@ const formatDate = (value) => {
 };
 
 const money = (value) =>
-  `â‚¹${Number(value || 0).toLocaleString("en-IN")}`;
+  `₹${Number(value || 0).toLocaleString("en-IN")}`;
 
 function App() {
   const [coaches, setCoaches] = useState([]);
@@ -676,7 +676,7 @@ function App() {
       }
 
       setNotice(
-        "ðŸ’³ Payment successful! Demo transaction completed."
+        "💳 Payment successful! Demo transaction completed."
       );
 
       await loadData();
@@ -762,7 +762,7 @@ function App() {
       });
 
       setNotice(
-        "â­ Thank you! Your review was submitted."
+        "⭐ Thank you! Your review was submitted."
       );
 
       await loadData();
@@ -924,7 +924,7 @@ function App() {
           <div className="hero-content">
 
             <div className="eyebrow">
-              âœ¨ TRUSTED MUSIC LEARNING PLATFORM
+              ✨ TRUSTED MUSIC LEARNING PLATFORM
             </div>
 
             <h1>
@@ -948,7 +948,7 @@ function App() {
                 href="#coaches"
                 className="dark-button"
               >
-                Find Your Coach â†’
+                Find Your Coach →
               </a>
 
               <a
@@ -962,15 +962,15 @@ function App() {
 
             <div className="trust-row">
               <span>
-                âœ“ Verified Coaches
+                ✓ Verified Coaches
               </span>
 
               <span>
-                âœ“ Flexible Scheduling
+                ✓ Flexible Scheduling
               </span>
 
               <span>
-                âœ“ Progress Tracking
+                ✓ Progress Tracking
               </span>
             </div>
 
@@ -986,7 +986,7 @@ function App() {
 
             <div className="floating-card rating-card">
               <strong>
-                â­ 5.0
+                ⭐ 5.0
               </strong>
 
               <span>
@@ -1111,7 +1111,7 @@ function App() {
                   </span>
 
                   <small>
-                    Explore coaches â†’
+                    Explore coaches →
                   </small>
 
                 </button>
@@ -1144,7 +1144,7 @@ function App() {
           <div className="feature-grid">
 
             <Feature
-              icon="ðŸ›¡ï¸"
+              icon="🛡️"
               title="Trusted Coaches"
             >
               Discover experienced and verified
@@ -1160,7 +1160,7 @@ function App() {
             </Feature>
 
             <Feature
-              icon="ðŸ“ˆ"
+              icon="📈"
               title="Track Progress"
             >
               See notes, strengths, improvements
@@ -1168,7 +1168,7 @@ function App() {
             </Feature>
 
             <Feature
-              icon="â­"
+              icon="⭐"
               title="Real Reviews"
             >
               Learn from the experiences of
@@ -1345,7 +1345,7 @@ function App() {
                 </h2>
 
                 <div className="rating-line">
-                  â­{" "}
+                  ⭐{" "}
                   {getCoachRating(
                     selectedCoach.id
                   )}
@@ -1372,7 +1372,7 @@ function App() {
 
                   {selectedCoach.isVerified && (
                     <span>
-                      âœ“ Verified
+                      ✓ Verified
                     </span>
                   )}
 
@@ -1629,7 +1629,7 @@ function App() {
                   className="dark-button full"
                   type="submit"
                 >
-                  Book Trial Lesson â†’
+                  Book Trial Lesson →
                 </button>
 
               </form>
@@ -1685,13 +1685,13 @@ function App() {
             />
 
             <StatCard
-              icon="â­"
+              icon="⭐"
               value={averageRating}
               label="Average Rating"
             />
 
             <StatCard
-              icon="ðŸ’³"
+              icon="💳"
               value={money(paidAmount)}
               label="Amount Paid"
             />
@@ -1845,7 +1845,7 @@ function App() {
                           "PAID" ? (
 
                           <span className="paid-badge">
-                            âœ“ Paid
+                            ✓ Paid
                           </span>
 
                         ) : (
@@ -1858,7 +1858,7 @@ function App() {
                               )
                             }
                           >
-                            ðŸ’³ Pay Now
+                            💳 Pay Now
                           </button>
 
                         )}
@@ -2002,7 +2002,7 @@ function App() {
                     <div className="progress-card-head">
 
                       <span>
-                        ðŸ“ˆ Progress Note
+                        📈 Progress Note
                       </span>
 
                       <small>
@@ -2147,23 +2147,23 @@ function App() {
                 >
 
                   <option value="5">
-                    â­â­â­â­â­ â€” Excellent
+                    ⭐⭐⭐⭐⭐ â€” Excellent
                   </option>
 
                   <option value="4">
-                    â­â­â­â­ â€” Very Good
+                    ⭐⭐⭐⭐ â€” Very Good
                   </option>
 
                   <option value="3">
-                    â­â­â­ â€” Good
+                    ⭐⭐⭐ â€” Good
                   </option>
 
                   <option value="2">
-                    â­â­ â€” Needs Improvement
+                    ⭐⭐ â€” Needs Improvement
                   </option>
 
                   <option value="1">
-                    â­ â€” Poor
+                    ⭐ â€” Poor
                   </option>
 
                 </select>
@@ -2247,7 +2247,7 @@ function App() {
                         </div>
 
                         <strong>
-                          â­{" "}
+                          ⭐{" "}
                           {review.rating}/5
                         </strong>
 
@@ -2304,7 +2304,7 @@ function App() {
             href="#coaches"
             className="light-button"
           >
-            Find My Coach â†’
+            Find My Coach →
           </a>
 
         </section>
@@ -2608,7 +2608,7 @@ function CoachCard({
         </div>
 
         <div className="coach-rating">
-          â­ {rating}
+          ⭐ {rating}
         </div>
 
       </div>
@@ -2622,7 +2622,7 @@ function CoachCard({
 
         {coach.isVerified && (
           <span>
-            âœ“ Verified
+            ✓ Verified
           </span>
         )}
 
@@ -2688,7 +2688,7 @@ function CoachCard({
         className="dark-button full"
         onClick={onSelect}
       >
-        View Profile & Book â†’
+        View Profile & Book →
       </button>
 
     </article>
