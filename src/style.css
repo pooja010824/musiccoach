@@ -1750,3 +1750,28 @@ a {
   overflow: hidden;
 }
 
+/* FINAL: restore actual emoji rendering */
+.brand-icon,
+.auth-icon,
+.empty-icon,
+.music-note,
+.feature-icon,
+.stat-card > span {
+  font-size: revert !important;
+  background-image: none !important;
+}
+
+.brand-icon::before,
+.auth-icon::before,
+.empty-icon::before,
+.music-note::before,
+.feature-icon::before,
+.stat-card > span::before {
+  content: none !important;
+  background-image: none !important;
+}
+
+.instrument-icon {
+  background-image: none !important;
+  font-size: revert !important;
+}
