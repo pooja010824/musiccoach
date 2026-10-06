@@ -1611,4 +1611,142 @@ a {
   .footer-main > div:first-child {
     grid-column: auto;
   }
+}/* =========================================================
+   MUSICCOACH FINAL ICON FIX
+   Uses SVG fallbacks so icons never become blank squares.
+   ========================================================= */
+
+.brand-icon,
+.auth-icon,
+.empty-icon {
+  font-size: 0 !important;
 }
+
+.brand-icon::before,
+.auth-icon::before,
+.empty-icon::before {
+  content: "";
+  display: block;
+  width: 70%;
+  height: 70%;
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: contain;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cpath fill='%235e7965' d='M39 8v31.2a11 11 0 1 1-7-10.3V18l22-5v25.2a11 11 0 1 1-7-10.3V8H39z'/%3E%3C/svg%3E");
+}
+
+.music-note {
+  font-size: 0 !important;
+}
+
+.music-note::before {
+  content: "";
+  display: block;
+  width: 62%;
+  height: 62%;
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: contain;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cpath fill='white' d='M39 6v31.2a11 11 0 1 1-7-10.3V16l22-5v25.2a11 11 0 1 1-7-10.3V6H39z'/%3E%3C/svg%3E");
+}
+
+/* Instrument icons */
+.instrument-icon {
+  display: block !important;
+  width: 55px;
+  height: 55px;
+  margin: 0 auto 10px;
+  font-size: 0 !important;
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: contain;
+}
+
+.instrument-card:nth-child(1) .instrument-icon {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 80 80'%3E%3Crect x='8' y='15' width='64' height='48' rx='5' fill='%23617e68'/%3E%3Crect x='13' y='20' width='54' height='38' rx='2' fill='white'/%3E%3Cpath d='M25 20v38M37 20v38M49 20v38M61 20v38' stroke='%23617e68' stroke-width='2'/%3E%3Crect x='20' y='20' width='7' height='21' fill='%2317201d'/%3E%3Crect x='32' y='20' width='7' height='21' fill='%2317201d'/%3E%3Crect x='56' y='20' width='7' height='21' fill='%2317201d'/%3E%3C/svg%3E");
+}
+
+.instrument-card:nth-child(2) .instrument-icon {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 80 80'%3E%3Cpath d='M38 12h4v35c5 2 9 6 9 12 0 7-5 11-12 11s-12-4-12-11c0-6 4-10 9-12V12z' fill='%23617e68'/%3E%3Ccircle cx='40' cy='12' r='5' fill='%23617e68'/%3E%3Cpath d='M40 17v42' stroke='%2317201d' stroke-width='2'/%3E%3Cpath d='M25 50c7-5 23-5 30 0' fill='none' stroke='%23617e68' stroke-width='3'/%3E%3C/svg%3E");
+}
+
+.instrument-card:nth-child(3) .instrument-icon {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 80 80'%3E%3Crect x='25' y='10' width='30' height='42' rx='15' fill='%23617e68'/%3E%3Cpath d='M20 40v5c0 12 9 20 20 20s20-8 20-20v-5' fill='none' stroke='%23617e68' stroke-width='6' stroke-linecap='round'/%3E%3Cpath d='M40 65v7M29 72h22' stroke='%2317201d' stroke-width='5' stroke-linecap='round'/%3E%3C/svg%3E");
+}
+
+/* Feature icons */
+.feature-icon {
+  font-size: 0 !important;
+}
+
+.feature-card:nth-child(1) .feature-icon::before,
+.feature-card:nth-child(2) .feature-icon::before,
+.feature-card:nth-child(3) .feature-icon::before,
+.feature-card:nth-child(4) .feature-icon::before,
+.stat-card:nth-child(1) > span::before,
+.stat-card:nth-child(2) > span::before,
+.stat-card:nth-child(3) > span::before,
+.stat-card:nth-child(4) > span::before {
+  content: "";
+  display: block;
+  width: 27px;
+  height: 27px;
+  margin: auto;
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: contain;
+}
+
+.feature-card:nth-child(1) .feature-icon::before {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cpath fill='%23617e68' d='M32 5l23 9v16c0 15-10 25-23 30C19 55 9 45 9 30V14l23-9zm0 8L17 19v11c0 10 6 18 15 22 9-4 15-12 15-22V19L32 13z'/%3E%3Cpath fill='%23617e68' d='M28 39l-8-8 5-5 3 3 10-10 5 5-15 15z'/%3E%3C/svg%3E");
+}
+
+.feature-card:nth-child(2) .feature-icon::before {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect x='10' y='14' width='44' height='42' rx='6' fill='%23617e68'/%3E%3Crect x='15' y='23' width='34' height='28' fill='white'/%3E%3Cpath d='M20 9v10M44 9v10M15 30h34' stroke='%23617e68' stroke-width='5'/%3E%3C/svg%3E");
+}
+
+.feature-card:nth-child(3) .feature-icon::before {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cpath d='M10 52V36M25 52V25M40 52V17M55 52V9' stroke='%23617e68' stroke-width='7' stroke-linecap='round'/%3E%3Cpath d='M8 15l15 8 15-14 16 4' fill='none' stroke='%2317201d' stroke-width='4'/%3E%3C/svg%3E");
+}
+
+.feature-card:nth-child(4) .feature-icon::before {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cpath fill='%23617e68' d='M32 5l7 17 18 1-14 11 5 18-16-10-16 10 5-18L7 23l18-1 7-17z'/%3E%3C/svg%3E");
+}
+
+/* Dashboard stat icons */
+.stat-card > span {
+  font-size: 0 !important;
+  width: 30px;
+  height: 30px;
+}
+
+.stat-card:nth-child(1) > span::before {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect x='8' y='12' width='48' height='44' rx='6' fill='%23617e68'/%3E%3Cpath d='M18 7v12M46 7v12M8 25h48' stroke='white' stroke-width='5'/%3E%3C/svg%3E");
+}
+
+.stat-card:nth-child(2) > span::before {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cpath fill='%23617e68' d='M32 8l25 12-25 12L7 20 32 8z'/%3E%3Cpath fill='%23617e68' d='M17 29v12c0 8 7 13 15 13s15-5 15-13V29l-15 7-15-7z'/%3E%3C/svg%3E");
+}
+
+.stat-card:nth-child(3) > span::before {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cpath fill='%23617e68' d='M32 5l7 17 18 1-14 11 5 18-16-10-16 10 5-18L7 23l18-1 7-17z'/%3E%3C/svg%3E");
+}
+
+.stat-card:nth-child(4) > span::before {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect x='6' y='15' width='52' height='34' rx='6' fill='%23617e68'/%3E%3Crect x='11' y='23' width='42' height='6' fill='white'/%3E%3Ccircle cx='46' cy='40' r='5' fill='white'/%3E%3C/svg%3E");
+}
+
+/* Keep text readable while removing broken emoji glyphs */
+.profile-pills span,
+.coach-tags span,
+.paid-badge,
+.cancelled-badge {
+  font-family: Arial, sans-serif;
+}
+
+/* Clean up icon spacing */
+.brand-icon,
+.auth-icon {
+  overflow: hidden;
+}
+
