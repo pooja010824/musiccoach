@@ -848,9 +848,7 @@ function App() {
           href="#home"
           className="brand"
         >
-          <span className="brand-icon">
-            
-          </span>
+          <span className="brand-icon">{"\u{1F3B5}"}</span>
 
           <span>
             Music<span>Coach</span>
@@ -979,9 +977,7 @@ function App() {
           <div className="hero-visual">
 
             <div className="music-orb">
-              <div className="music-note">
-                
-              </div>
+              <div className="music-note">{"\u{1F3B5}"}</div>
             </div>
 
             <div className="floating-card rating-card">
@@ -2324,9 +2320,7 @@ function App() {
               className="brand footer-brand"
             >
 
-              <span className="brand-icon">
-                
-              </span>
+              <span className="brand-icon">{"\u{1F3B5}"}</span>
 
               <span>
                 Music<span>Coach</span>
