@@ -1941,4 +1941,20 @@ a {
   -webkit-mask-image: none !important;
   mask-image: none !important;
 }
+/* Fix MusicCoach music emoji rendering */
+.brand-icon,
+.music-note {
+  font-family: "Segoe UI Emoji", "Apple Color Emoji", "Noto Color Emoji", sans-serif !important;
+  font-style: normal !important;
+  font-weight: 400 !important;
+  text-rendering: auto !important;
+  -webkit-font-smoothing: antialiased;
+}
 
+.brand-icon {
+  line-height: 1;
+}
+
+.music-note {
+  line-height: 1;
+}
